@@ -20,24 +20,24 @@ public class AttendeeTests : BaseTest
             Faker.Person.LastName);
 
         var ticketAttendee = Attendee.Create(
-            Guid.NewGuid(), 
-            Faker.Internet.Email(), 
-            Faker.Person.FirstName, 
+            Guid.NewGuid(),
+            Faker.Internet.Email(),
+            Faker.Person.FirstName,
             Faker.Person.LastName);
 
         DateTime startsAtUtc = DateTime.UtcNow;
 
         var @event = Event.Create(
-            Guid.NewGuid(), 
-            Faker.Music.Genre(), 
-            Faker.Music.Genre(), 
-            Faker.Address.StreetName(), 
+            Guid.NewGuid(),
+            Faker.Music.Genre(),
+            Faker.Music.Genre(),
+            Faker.Address.StreetName(),
             startsAtUtc, null);
 
         var ticket = Ticket.Create(
             Guid.NewGuid(),
             ticketAttendee,
-            @event, 
+            @event,
             Faker.Random.String());
 
         //Act
@@ -57,7 +57,7 @@ public class AttendeeTests : BaseTest
     {
         //Arrange
         var attendee = Attendee.Create(
-            Guid.NewGuid(), 
+            Guid.NewGuid(),
             Faker.Internet.Email(),
             Faker.Person.FirstName,
             Faker.Person.LastName);
@@ -65,16 +65,16 @@ public class AttendeeTests : BaseTest
         DateTime startsAtUtc = DateTime.UtcNow;
 
         var @event = Event.Create(
-            Guid.NewGuid(), 
-            Faker.Music.Genre(), 
-            Faker.Music.Genre(), 
-            Faker.Address.StreetName(), 
+            Guid.NewGuid(),
+            Faker.Music.Genre(),
+            Faker.Music.Genre(),
+            Faker.Address.StreetName(),
             startsAtUtc, null);
 
         var ticket = Ticket.Create(
             Guid.NewGuid(),
             attendee,
-            @event, 
+            @event,
             Faker.Random.String());
 
         ticket.MarkAsUsed();
@@ -96,15 +96,15 @@ public class AttendeeTests : BaseTest
     {
         //Arrange
         var attendee = Attendee.Create(
-            Guid.NewGuid(), 
-            Faker.Internet.Email(), 
-            Faker.Person.FirstName, 
+            Guid.NewGuid(),
+            Faker.Internet.Email(),
+            Faker.Person.FirstName,
             Faker.Person.LastName);
 
         DateTime startsAtUtc = DateTime.UtcNow;
 
         var @event = Event.Create(
-            Guid.NewGuid(), 
+            Guid.NewGuid(),
             Faker.Music.Genre(),
             Faker.Music.Genre(),
             Faker.Address.StreetName(),
@@ -112,8 +112,8 @@ public class AttendeeTests : BaseTest
 
         var ticket = Ticket.Create(
             Guid.NewGuid(),
-            attendee, 
-            @event, 
+            attendee,
+            @event,
             Faker.Random.String());
 
         //Act

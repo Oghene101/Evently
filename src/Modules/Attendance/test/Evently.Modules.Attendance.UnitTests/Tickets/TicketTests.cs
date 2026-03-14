@@ -14,18 +14,18 @@ public class TicketTests : BaseTest
     {
         //Arrange
         var attendee = Attendee.Create(
-            Guid.NewGuid(), 
+            Guid.NewGuid(),
             Faker.Internet.Email(),
-            Faker.Person.FirstName, 
+            Faker.Person.FirstName,
             Faker.Person.LastName);
 
         DateTime startsAtUtc = DateTime.UtcNow;
 
         var @event = Event.Create(
-            Guid.NewGuid(), 
-            Faker.Music.Genre(), 
-            Faker.Music.Genre(), 
-            Faker.Address.StreetName(), 
+            Guid.NewGuid(),
+            Faker.Music.Genre(),
+            Faker.Music.Genre(),
+            Faker.Address.StreetName(),
             startsAtUtc, null);
 
         //Act
@@ -47,17 +47,17 @@ public class TicketTests : BaseTest
     {
         //Arrange
         var attendee = Attendee.Create(
-            Guid.NewGuid(), 
-            Faker.Internet.Email(), 
-            Faker.Person.FirstName, 
+            Guid.NewGuid(),
+            Faker.Internet.Email(),
+            Faker.Person.FirstName,
             Faker.Person.LastName);
 
         DateTime startsAtUtc = DateTime.UtcNow;
 
         var @event = Event.Create(
-            Guid.NewGuid(), 
-            Faker.Music.Genre(), 
-            Faker.Music.Genre(), 
+            Guid.NewGuid(),
+            Faker.Music.Genre(),
+            Faker.Music.Genre(),
             Faker.Address.StreetName(),
             startsAtUtc, null);
 

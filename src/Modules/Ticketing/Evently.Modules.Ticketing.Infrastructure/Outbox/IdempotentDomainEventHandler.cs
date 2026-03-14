@@ -33,7 +33,7 @@ internal sealed class IdempotentDomainEventHandler<TDomainEvent>(
         DbConnection dbConnection,
         OutboxMessageConsumer outboxMessageConsumer)
     {
-        const string sql = 
+        const string sql =
             """
             SELECT EXISTS(
                 SELECT 1

@@ -8,7 +8,7 @@ namespace Evently.Modules.Ticketing.IntegrationTests.Customers;
 
 public class UpdateCustomerTests : BaseIntegrationTest
 {
-    public UpdateCustomerTests(IntegrationTestWebAppFactory factory) 
+    public UpdateCustomerTests(IntegrationTestWebAppFactory factory)
         : base(factory)
     {
     }

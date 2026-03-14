@@ -7,6 +7,7 @@ using Evently.Common.Application.Messaging;
 using Evently.Common.Domain;
 using Evently.Common.Infrastructure.Outbox;
 using Evently.Common.Infrastructure.Serialization;
+using Evently.Modules.Attendance.Application;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -48,7 +49,7 @@ internal sealed class ProcessOutboxJob(
                 IEnumerable<IDomainEventHandler> domainEventHandlers = DomainEventHandlersFactory.GetHandlers(
                     domainEvent.GetType(),
                     scope.ServiceProvider,
-                    Application.AssemblyReference.Assembly);
+                    AssemblyReference.Assembly);
 
                 foreach (IDomainEventHandler domainEventHandler in domainEventHandlers)
                 {

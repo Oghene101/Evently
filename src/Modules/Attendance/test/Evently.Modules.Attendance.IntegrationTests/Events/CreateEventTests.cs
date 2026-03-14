@@ -1,5 +1,4 @@
-﻿using Bogus.DataSets;
-using Evently.Common.Domain;
+﻿using Evently.Common.Domain;
 using Evently.Modules.Attendance.Application.Events.CreateEvent;
 using Evently.Modules.Attendance.IntegrationTests.Abstractions;
 using FluentAssertions;

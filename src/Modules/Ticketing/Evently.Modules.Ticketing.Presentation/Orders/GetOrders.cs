@@ -15,13 +15,13 @@ internal sealed class GetOrders : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("orders", async (ICustomerContext customerContext, ISender sender) =>
-        {
-            Result<IReadOnlyCollection<OrderResponse>> result = await sender.Send(
-                new GetOrdersQuery(customerContext.CustomerId));
+            {
+                Result<IReadOnlyCollection<OrderResponse>> result = await sender.Send(
+                    new GetOrdersQuery(customerContext.CustomerId));
 
-            return result.Match(Results.Ok, ApiResults.Problem);
-        })
-        .RequireAuthorization(Permissions.GetOrders)
-        .WithTags(Tags.Orders);
+                return result.Match(Results.Ok, ApiResults.Problem);
+            })
+            .RequireAuthorization(Permissions.GetOrders)
+            .WithTags(Tags.Orders);
     }
 }

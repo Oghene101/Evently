@@ -10,7 +10,7 @@ public class CancelEventTests : BaseIntegrationTest
 {
     private const decimal Quantity = 10;
 
-    public CancelEventTests(IntegrationTestWebAppFactory factory) 
+    public CancelEventTests(IntegrationTestWebAppFactory factory)
         : base(factory)
     {
     }

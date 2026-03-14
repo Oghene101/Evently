@@ -10,7 +10,7 @@ namespace Evently.Modules.Attendance.IntegrationTests.Tickets;
 public class CreateTicketsTests : BaseIntegrationTest
 {
     public CreateTicketsTests(IntegrationTestWebAppFactory factory)
-       : base(factory)
+        : base(factory)
     {
     }
 

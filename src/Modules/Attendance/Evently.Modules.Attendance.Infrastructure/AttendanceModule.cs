@@ -15,6 +15,7 @@ using Evently.Modules.Attendance.Infrastructure.Events;
 using Evently.Modules.Attendance.Infrastructure.Inbox;
 using Evently.Modules.Attendance.Infrastructure.Outbox;
 using Evently.Modules.Attendance.Infrastructure.Tickets;
+using Evently.Modules.Attendance.Presentation;
 using Evently.Modules.Events.IntegrationEvents;
 using Evently.Modules.Ticketing.IntegrationEvents;
 using Evently.Modules.Users.IntegrationEvents;
@@ -39,11 +40,11 @@ public static class AttendanceModule
 
             services.AddInfrastructure(configuration);
 
-            services.AddEndpoints(Presentation.AssemblyReference.Assembly);
+            services.AddEndpoints(AssemblyReference.Assembly);
 
             return services;
         }
-        
+
         private void AddInfrastructure(IConfiguration configuration)
         {
             services.AddDbContext<AttendanceDbContext>((sp, options) =>
@@ -98,7 +99,7 @@ public static class AttendanceModule
 
         private void AddIntegrationEventHandlers()
         {
-            Type[] integrationEventHandlers = Presentation.AssemblyReference.Assembly
+            Type[] integrationEventHandlers = AssemblyReference.Assembly
                 .GetTypes()
                 .Where(t => t.IsAssignableTo(typeof(IIntegrationEventHandler)))
                 .ToArray();
@@ -119,7 +120,6 @@ public static class AttendanceModule
                 services.Decorate(integrationEventHandler, closedIdempotentHandler);
             }
         }
-
     }
 
     public static void ConfigureConsumers(IRegistrationConfigurator registrationConfigurator, string instanceId)

@@ -15,12 +15,12 @@ internal sealed class GetCategories : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("categories", async (ISender sender) =>
-        {
-            Result<IReadOnlyCollection<CategoryResponse>> result = await sender.Send(new GetCategoriesQuery());
+            {
+                Result<IReadOnlyCollection<CategoryResponse>> result = await sender.Send(new GetCategoriesQuery());
 
-            return result.Match(Results.Ok, ApiResults.Problem);
-        })
-        .RequireAuthorization(Permissions.GetCategories)
-        .WithTags(Tags.Categories);
+                return result.Match(Results.Ok, ApiResults.Problem);
+            })
+            .RequireAuthorization(Permissions.GetCategories)
+            .WithTags(Tags.Categories);
     }
 }

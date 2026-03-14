@@ -17,11 +17,11 @@ internal sealed class TicketTypeRepository(TicketingDbContext context) : ITicket
             .TicketTypes
             .FromSql(
                 $"""
-                SELECT id, event_id, name, price, currency, quantity, available_quantity
-                FROM ticketing.ticket_types
-                WHERE id = {id}
-                FOR UPDATE NOWAIT
-                """)
+                 SELECT id, event_id, name, price, currency, quantity, available_quantity
+                 FROM ticketing.ticket_types
+                 WHERE id = {id}
+                 FOR UPDATE NOWAIT
+                 """)
             .SingleOrDefaultAsync(cancellationToken);
     }
 

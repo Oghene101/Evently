@@ -95,7 +95,6 @@ public class EventTests : BaseTest
             AssertDomainEventWasPublished<EventPaymentsRefundedDomainEvent>(@event.Value);
 
         domainEvent.EventId.Should().Be(@event.Value.Id);
-
     }
 
     [Fact]
@@ -120,6 +119,5 @@ public class EventTests : BaseTest
             AssertDomainEventWasPublished<EventTicketsArchivedDomainEvent>(@event.Value);
 
         domainEvent.EventId.Should().Be(@event.Value.Id);
-
     }
 }

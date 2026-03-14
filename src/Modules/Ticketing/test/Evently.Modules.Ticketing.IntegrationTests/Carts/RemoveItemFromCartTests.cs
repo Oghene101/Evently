@@ -12,8 +12,8 @@ public class RemoveItemFromCartTests : BaseIntegrationTest
     private const decimal Quantity = 10;
 
     public RemoveItemFromCartTests(IntegrationTestWebAppFactory factory)
-        :base(factory)
-    { 
+        : base(factory)
+    {
     }
 
     [Fact]

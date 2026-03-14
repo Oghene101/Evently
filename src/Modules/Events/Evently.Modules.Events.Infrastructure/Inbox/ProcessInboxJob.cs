@@ -6,6 +6,7 @@ using Evently.Common.Application.Data;
 using Evently.Common.Application.EventBus;
 using Evently.Common.Infrastructure.Inbox;
 using Evently.Common.Infrastructure.Serialization;
+using Evently.Modules.Events.Presentation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -48,7 +49,7 @@ internal sealed class ProcessInboxJob(
                 IEnumerable<IIntegrationEventHandler> handlers = IntegrationEventHandlersFactory.GetHandlers(
                     integrationEvent.GetType(),
                     scope.ServiceProvider,
-                    Presentation.AssemblyReference.Assembly);
+                    AssemblyReference.Assembly);
 
                 foreach (IIntegrationEventHandler integrationEventHandler in handlers)
                 {

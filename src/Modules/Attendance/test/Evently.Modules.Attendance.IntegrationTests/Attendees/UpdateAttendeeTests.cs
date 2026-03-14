@@ -9,7 +9,7 @@ namespace Evently.Modules.Attendance.IntegrationTests.Attendees;
 public class UpdateAttendeeTests : BaseIntegrationTest
 {
     public UpdateAttendeeTests(IntegrationTestWebAppFactory factory)
-       : base(factory)
+        : base(factory)
     {
     }
 

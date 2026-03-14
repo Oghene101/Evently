@@ -12,7 +12,7 @@ public class CustomerTests : BaseTest
     {
         //Act
         Result<Customer> result = Customer.Create(
-            Guid.NewGuid(), 
+            Guid.NewGuid(),
             Faker.Internet.Email(),
             Faker.Name.FirstName(),
             Faker.Name.LastName());

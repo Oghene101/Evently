@@ -45,10 +45,10 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             keyCloakRealmUrl);
 
         builder.ConfigureTestServices(services => services.Configure<KeyCloakOptions>(o =>
-            {
-                o.AdminUrl = $"{keycloakAddress}admin/realms/evently/";
-                o.TokenUrl = $"{keyCloakRealmUrl}/protocol/openid-connect/token";
-            }));
+        {
+            o.AdminUrl = $"{keycloakAddress}admin/realms/evently/";
+            o.TokenUrl = $"{keyCloakRealmUrl}/protocol/openid-connect/token";
+        }));
     }
 
     public async Task InitializeAsync()

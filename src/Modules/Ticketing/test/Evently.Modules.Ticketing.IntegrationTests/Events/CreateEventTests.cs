@@ -22,7 +22,7 @@ public class CreateEventTests : BaseIntegrationTest
 
         var ticketType = new CreateEventCommand.TicketTypeRequest(
             ticketTypeId,
-        eventId,
+            eventId,
             Faker.Music.Genre(),
             Faker.Random.Decimal(),
             Faker.Random.String(3),

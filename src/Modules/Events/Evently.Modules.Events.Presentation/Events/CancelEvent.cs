@@ -14,12 +14,12 @@ internal sealed class CancelEvent : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapDelete("events/{id}/cancel", async (Guid id, ISender sender) =>
-        {
-            Result result = await sender.Send(new CancelEventCommand(id));
+            {
+                Result result = await sender.Send(new CancelEventCommand(id));
 
-            return result.Match(Results.NoContent, ApiResults.Problem);
-        })
-        .RequireAuthorization(Permissions.ModifyEvents)
-        .WithTags(Tags.Events);
+                return result.Match(Results.NoContent, ApiResults.Problem);
+            })
+            .RequireAuthorization(Permissions.ModifyEvents)
+            .WithTags(Tags.Events);
     }
 }

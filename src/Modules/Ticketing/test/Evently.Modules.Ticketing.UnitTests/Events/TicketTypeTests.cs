@@ -48,12 +48,12 @@ public class TicketTypeTests : BaseTest
 
         decimal quantity = Faker.Random.Decimal();
         var ticketType = TicketType.Create(
-        Guid.NewGuid(),
-        @event.Id,
-        Faker.Name.FirstName(),
-        Faker.Random.Decimal(),
-        Faker.Random.String(3),
-        quantity);
+            Guid.NewGuid(),
+            @event.Id,
+            Faker.Name.FirstName(),
+            Faker.Random.Decimal(),
+            Faker.Random.String(3),
+            quantity);
 
         //Act
         Result result = ticketType.UpdateQuantity(quantity + 1);
@@ -77,18 +77,19 @@ public class TicketTypeTests : BaseTest
 
         decimal quantity = Faker.Random.Decimal();
         Result<TicketType> ticketType = TicketType.Create(
-        Guid.NewGuid(),
-        @event.Id,
-        Faker.Name.FirstName(),
-        Faker.Random.Decimal(),
-        Faker.Random.String(3),
-        quantity);
+            Guid.NewGuid(),
+            @event.Id,
+            Faker.Name.FirstName(),
+            Faker.Random.Decimal(),
+            Faker.Random.String(3),
+            quantity);
 
         //Act
         ticketType.Value.UpdateQuantity(quantity);
 
         //Assert
-        TicketTypeSoldOutDomainEvent domainEvent = AssertDomainEventWasPublished<TicketTypeSoldOutDomainEvent>(ticketType.Value);
+        TicketTypeSoldOutDomainEvent domainEvent =
+            AssertDomainEventWasPublished<TicketTypeSoldOutDomainEvent>(ticketType.Value);
 
         domainEvent.TicketTypeId.Should().Be(ticketType.Value.Id);
     }

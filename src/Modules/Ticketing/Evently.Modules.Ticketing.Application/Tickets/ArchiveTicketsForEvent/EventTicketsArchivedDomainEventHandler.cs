@@ -6,7 +6,7 @@ using Evently.Modules.Ticketing.IntegrationEvents;
 namespace Evently.Modules.Ticketing.Application.Tickets.ArchiveTicketsForEvent;
 
 internal sealed class EventTicketsArchivedDomainEventHandler(IEventBus eventBus)
-     : DomainEventHandler<EventTicketsArchivedDomainEvent>
+    : DomainEventHandler<EventTicketsArchivedDomainEvent>
 {
     public override async Task Handle(
         EventTicketsArchivedDomainEvent domainEvent,

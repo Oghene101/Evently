@@ -4,8 +4,7 @@ namespace Evently.Modules.Attendance.Application.EventStatistics;
 
 public sealed class EventStatistics
 {
-    [BsonId]
-    public Guid EventId { get; set; }
+    [BsonId] public Guid EventId { get; set; }
 
     public string Title { get; set; }
 

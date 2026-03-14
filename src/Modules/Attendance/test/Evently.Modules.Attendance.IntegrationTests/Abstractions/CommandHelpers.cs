@@ -15,7 +15,7 @@ internal static class CommandHelpers
         var faker = new Faker();
         Result result = await sender.Send(
             new CreateAttendeeCommand(
-                attendeeId, 
+                attendeeId,
                 faker.Internet.Email(),
                 faker.Name.FirstName(),
                 faker.Name.LastName()));
@@ -48,7 +48,7 @@ internal static class CommandHelpers
         var faker = new Faker();
         Result result = await sender.Send(
             new CreateEventCommand(
-                eventId, 
+                eventId,
                 faker.Music.Genre(),
                 faker.Music.Genre(),
                 faker.Address.StreetAddress(),
@@ -57,6 +57,6 @@ internal static class CommandHelpers
 
         result.IsSuccess.Should().BeTrue();
 
-        return eventId; 
+        return eventId;
     }
 }

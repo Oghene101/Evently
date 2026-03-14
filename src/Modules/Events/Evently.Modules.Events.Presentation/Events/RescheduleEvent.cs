@@ -14,14 +14,14 @@ internal sealed class RescheduleEvent : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPut("events/{id}/reschedule", async (Guid id, Request request, ISender sender) =>
-        {
-            Result result = await sender.Send(
-                new RescheduleEventCommand(id, request.StartsAtUtc, request.EndsAtUtc));
+            {
+                Result result = await sender.Send(
+                    new RescheduleEventCommand(id, request.StartsAtUtc, request.EndsAtUtc));
 
-            return result.Match(Results.NoContent, ApiResults.Problem);
-        })
-        .RequireAuthorization(Permissions.ModifyEvents)
-        .WithTags(Tags.Events);
+                return result.Match(Results.NoContent, ApiResults.Problem);
+            })
+            .RequireAuthorization(Permissions.ModifyEvents)
+            .WithTags(Tags.Events);
     }
 
     internal sealed class Request

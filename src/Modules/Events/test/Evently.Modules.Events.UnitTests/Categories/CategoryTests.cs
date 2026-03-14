@@ -50,7 +50,7 @@ public class CategoryTests : BaseTest
 
         //Act
         category.ChangeName(newName);
-        
+
         //Assert
         CategoryNameChangedDomainEvent domainEvent =
             AssertDomainEventWasPublished<CategoryNameChangedDomainEvent>(category);

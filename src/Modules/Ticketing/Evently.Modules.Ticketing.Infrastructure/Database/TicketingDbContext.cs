@@ -22,7 +22,7 @@ public sealed class TicketingDbContext(DbContextOptions<TicketingDbContext> opti
 {
     internal DbSet<Customer> Customers { get; set; }
 
-    internal DbSet<Event> Events{ get; set; }
+    internal DbSet<Event> Events { get; set; }
 
     internal DbSet<TicketType> TicketTypes { get; set; }
 

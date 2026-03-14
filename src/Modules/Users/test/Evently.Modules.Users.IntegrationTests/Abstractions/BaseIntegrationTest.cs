@@ -59,8 +59,7 @@ public class BaseIntegrationTest : IDisposable
 
     internal sealed class AuthToken
     {
-        [JsonPropertyName("access_token")]
-        public string AccessToken { get; init; }
+        [JsonPropertyName("access_token")] public string AccessToken { get; init; }
     }
 
     public void Dispose()

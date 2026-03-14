@@ -32,7 +32,7 @@ internal sealed class PermissionConfiguration : IEntityTypeConfiguration<Permiss
             Permission.GetTickets,
             Permission.CheckInTicket,
             Permission.GetEventStatistics);
-    
+
         builder
             .HasMany<Role>()
             .WithMany()

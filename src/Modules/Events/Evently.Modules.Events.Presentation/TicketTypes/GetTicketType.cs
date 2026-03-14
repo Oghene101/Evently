@@ -14,12 +14,12 @@ internal sealed class GetTicketType : IEndpoint
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("ticket-types/{id}", async (Guid id, ISender sender) =>
-        {
-            Result<TicketTypeResponse> result = await sender.Send(new GetTicketTypeQuery(id));
+            {
+                Result<TicketTypeResponse> result = await sender.Send(new GetTicketTypeQuery(id));
 
-            return result.Match(Results.Ok, ApiResults.Problem);
-        })
-        .RequireAuthorization(Permissions.GetTicketTypes)
-        .WithTags(Tags.TicketTypes);
+                return result.Match(Results.Ok, ApiResults.Problem);
+            })
+            .RequireAuthorization(Permissions.GetTicketTypes)
+            .WithTags(Tags.TicketTypes);
     }
 }

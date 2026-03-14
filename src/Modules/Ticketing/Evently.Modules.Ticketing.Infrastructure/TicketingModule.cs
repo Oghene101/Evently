@@ -48,7 +48,7 @@ public static class TicketingModule
 
             return services;
         }
-        
+
         private void AddInfrastructure(IConfiguration configuration)
         {
             services.AddDbContext<TicketingDbContext>((sp, options) =>
@@ -105,7 +105,7 @@ public static class TicketingModule
                 services.Decorate(domainEventHandler, closedIdempotentHandler);
             }
         }
-        
+
         private void AddIntegrationEventHandlers()
         {
             Type[] integrationEventHandlers = AssemblyReference.Assembly
@@ -129,7 +129,6 @@ public static class TicketingModule
                 services.Decorate(integrationEventHandler, closedIdempotentHandler);
             }
         }
-
     }
 
     public static void ConfigureConsumers(IRegistrationConfigurator registrationConfigurator, string instanceId)
@@ -149,5 +148,4 @@ public static class TicketingModule
         registrationConfigurator.AddConsumer<IntegrationEventConsumer<EventCancellationStartedIntegrationEvent>>()
             .Endpoint(c => c.InstanceId = instanceId);
     }
-    
 }

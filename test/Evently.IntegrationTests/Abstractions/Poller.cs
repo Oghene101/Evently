@@ -17,7 +17,7 @@ internal static class Poller
 
             if (result.IsSuccess)
             {
-                return result; 
+                return result;
             }
         }
 

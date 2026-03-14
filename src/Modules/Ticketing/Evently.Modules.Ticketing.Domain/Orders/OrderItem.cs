@@ -20,7 +20,8 @@ public sealed class OrderItem
 
     public string Currency { get; private set; }
 
-    internal static OrderItem Create(Guid orderId, Guid ticketTypeId, decimal quantity, decimal unitPrice, string currency)
+    internal static OrderItem Create(Guid orderId, Guid ticketTypeId, decimal quantity, decimal unitPrice,
+        string currency)
     {
         var orderItem = new OrderItem
         {
@@ -35,5 +36,4 @@ public sealed class OrderItem
 
         return orderItem;
     }
-
 }
