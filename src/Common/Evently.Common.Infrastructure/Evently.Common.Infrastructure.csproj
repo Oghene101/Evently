@@ -24,6 +24,7 @@
         <PackageReference Include="OpenTelemetry.Instrumentation.StackExchangeRedis"  />
         <PackageReference Include="Quartz.Extensions.Hosting"  />
         <PackageReference Include="Scrutor"  />
+        <PackageReference Include="Snappier"/>
     </ItemGroup>
 
     <ItemGroup>

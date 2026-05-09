@@ -25,7 +25,7 @@
     environment:
       - POSTGRES_DB=evently
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=Oghene123@
+      - POSTGRES_PASSWORD=postgres
     volumes:
       - ./.containers/db:/var/lib/postgresql
     ports:

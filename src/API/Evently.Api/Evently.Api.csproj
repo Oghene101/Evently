@@ -2,6 +2,7 @@
     
     <PropertyGroup>
       <UserSecretsId>1ed770c7-af75-4705-a601-fb8ee3d613f9</UserSecretsId>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
     
     <ItemGroup>
@@ -19,7 +20,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
+        <Content Include="..\..\..\.dockerignore">
         <Link>.dockerignore</Link>
       </Content>
       <Content Update="modules.ticketing.json">
