@@ -5,6 +5,8 @@
     build:
       context: .
       dockerfile: src/API/Evently.Api/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - 5000:8080
       - 5001:8081
@@ -15,6 +17,8 @@
     build:
       context: .
       dockerfile: src/API/Evently.Gateway/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - 3000:8080
       - 3001:8081
