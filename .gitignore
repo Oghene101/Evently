@@ -35,5 +35,8 @@ project.fragment.lock.json
 .env
 .env.local
 
+# Docker Compose container data
+.containers/
+
 # macOS
 .DS_Store
