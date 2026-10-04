@@ -51,12 +51,14 @@ public sealed class Payment : Entity
             return Result.Failure(PaymentErrors.AlreadyRefunded);
         }
 
-        if (AmountRefunded + refundAmount > Amount)
+        decimal amountRefunded = AmountRefunded ?? decimal.Zero;
+
+        if (amountRefunded + refundAmount > Amount)
         {
             return Result.Failure(PaymentErrors.NotEnoughFunds);
         }
 
-        AmountRefunded += refundAmount;
+        AmountRefunded = amountRefunded + refundAmount;
 
         if (Amount == AmountRefunded)
         {
