@@ -4,6 +4,7 @@ using Bogus;
 using Evently.Modules.Users.Infrastructure.Database;
 using Evently.Modules.Users.Infrastructure.Identity;
 using MediatR;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -25,7 +26,10 @@ public class BaseIntegrationTest : IDisposable
     {
         _scope = factory.Services.CreateScope();
         Sender = _scope.ServiceProvider.GetRequiredService<ISender>();
-        HttpClient = factory.CreateClient();
+        HttpClient = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("http://localhost/api/v1/")
+        });
         _options = _scope.ServiceProvider.GetRequiredService<IOptions<KeyCloakOptions>>().Value;
         DbContext = _scope.ServiceProvider.GetRequiredService<UsersDbContext>();
     }

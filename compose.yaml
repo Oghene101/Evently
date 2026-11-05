@@ -89,7 +89,7 @@
       - 15672:15672
   
   evently.mongo:
-    image: mongo:latest
+    image: mongo:7.0
     container_name: Evently.Mongo
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin

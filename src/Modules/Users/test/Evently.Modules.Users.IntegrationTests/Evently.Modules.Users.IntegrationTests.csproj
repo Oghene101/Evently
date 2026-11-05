@@ -28,7 +28,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Evently.Modules.Users.Infrastructure\Evently.Modules.Users.Infrastructure.csproj" />
+      <None Include="..\..\..\..\..\.files\evently-realm-export.json" Link="evently-realm-export.json" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\API\Evently.Api\Evently.Api.csproj" />
     </ItemGroup>
 
 </Project>
