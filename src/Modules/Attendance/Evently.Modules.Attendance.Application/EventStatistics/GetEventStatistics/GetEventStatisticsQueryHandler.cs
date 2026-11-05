@@ -1,17 +1,24 @@
 ﻿using Evently.Common.Application.Messaging;
 using Evently.Common.Domain;
+using Evently.Modules.Attendance.Domain.Events;
 
 namespace Evently.Modules.Attendance.Application.EventStatistics.GetEventStatistics;
 
-internal sealed class GetEventStatisticsQueryHandler(IEventStatisticsRepository eventStatisticsRepository)
+internal sealed class GetEventStatisticsQueryHandler(
+    IEventStatisticsRepository eventStatisticsRepository)
     : IQueryHandler<GetEventStatisticsQuery, EventStatistics>
 {
     public async Task<Result<EventStatistics>> Handle(
         GetEventStatisticsQuery request,
         CancellationToken cancellationToken)
     {
-        EventStatistics eventStatistics =
+        EventStatistics? eventStatistics =
             await eventStatisticsRepository.GetAsync(request.EventId, cancellationToken);
+
+        if (eventStatistics is null)
+        {
+            return Result.Failure<EventStatistics>(EventErrors.NotFound(request.EventId));
+        }
 
         return eventStatistics;
     }
