@@ -1,5 +1,4 @@
-﻿using Evently.Common.Application.Exceptions;
-using Evently.Common.Application.Messaging;
+﻿using Evently.Common.Application.Messaging;
 using Evently.Common.Domain;
 using Evently.Modules.Ticketing.Application.Orders.GetOrder;
 using Evently.Modules.Ticketing.Domain.Orders;
@@ -7,10 +6,11 @@ using MediatR;
 
 namespace Evently.Modules.Ticketing.Application.Orders.CreateOrder;
 
-internal sealed class SendOrderConfirmationDomainEventHandler(ISender sender)
+internal sealed class SendOrderConfirmationDomainEventHandler(
+    ISender sender)
     : DomainEventHandler<OrderCreatedDomainEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         OrderCreatedDomainEvent notification,
         CancellationToken cancellationToken = default)
     {
@@ -18,9 +18,11 @@ internal sealed class SendOrderConfirmationDomainEventHandler(ISender sender)
 
         if (result.IsFailure)
         {
-            throw new EventlyException(nameof(GetOrderQuery), result.Error);
+            return Result.Failure(result.Error);
         }
 
         // Send order confirmation notification.
+
+        return Result.Success();
     }
 }

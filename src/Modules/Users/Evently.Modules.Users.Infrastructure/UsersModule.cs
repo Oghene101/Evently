@@ -1,6 +1,5 @@
 ﻿using Evently.Common.Application.Authorization;
-using Evently.Common.Application.EventBus;
-using Evently.Common.Application.Messaging;
+using Evently.Common.Infrastructure.Messaging;
 using Evently.Common.Infrastructure.Outbox;
 using Evently.Common.Presentation.Endpoints;
 using Evently.Modules.Users.Application.Abstractions.Data;
@@ -17,21 +16,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 
 namespace Evently.Modules.Users.Infrastructure;
 
 public static class UsersModule
 {
+    private const string ModuleName = "Users";
+
     extension(IServiceCollection services)
     {
         public IServiceCollection AddUsersModule(IConfiguration configuration)
         {
-            services.AddDomainEventHandlers();
-
-            services.AddIntegrationEventHandlers();
-
             services.AddInfrastructure(configuration);
 
             services.AddEndpoints(AssemblyReference.Assembly);
@@ -65,67 +61,33 @@ public static class UsersModule
                         configuration.GetConnectionString("Database"),
                         npgsqlOptions => npgsqlOptions
                             .MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Users))
-                    .AddInterceptors(sp.GetRequiredService<InsertOutboxMessagesInterceptor>())
+                    .AddInterceptors(sp.GetRequiredKeyedService<InsertOutboxMessagesInterceptor>(ModuleName))
                     .UseSnakeCaseNamingConvention());
 
             services.AddScoped<IUserRepository, UserRepository>();
 
             services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<UsersDbContext>());
 
-            services.Configure<OutboxOptions>(configuration.GetSection("Users:Outbox"));
+            var outbox = new OutboxDefinition(
+                ModuleName,
+                Schemas.Users,
+                Application.AssemblyReference.Assembly,
+                OutboxLanes.All,
+                OutboxLanes.Of);
 
-            services.ConfigureOptions<ConfigureProcessOutboxJob>();
+            IConfigurationSection outboxSection = configuration.GetSection("Users:Outbox");
 
-            services.Configure<InboxOptions>(configuration.GetSection("Users:Inbox"));
+            services.AddOutbox(outbox, outboxSection);
 
-            services.ConfigureOptions<ConfigureProcessInboxJob>();
-        }
+            var inbox = new InboxDefinition(
+                ModuleName,
+                Schemas.Users,
+                AssemblyReference.Assembly,
+                InboxLanes.All);
 
-        private void AddDomainEventHandlers()
-        {
-            Type[] domainEventHandlers = Application.AssemblyReference.Assembly
-                .GetTypes()
-                .Where(t => t.IsAssignableTo(typeof(IDomainEventHandler)))
-                .ToArray();
+            IConfigurationSection inboxSection = configuration.GetSection("Users:Inbox");
 
-            foreach (Type domainEventHandler in domainEventHandlers)
-            {
-                services.TryAddScoped(domainEventHandler);
-
-                Type domainEvent = domainEventHandler
-                    .GetInterfaces()
-                    .Single(i => i.IsGenericType)
-                    .GetGenericArguments()
-                    .Single();
-
-                Type closedIdempotentHandler = typeof(IdempotentDomainEventHandler<>).MakeGenericType(domainEvent);
-
-                services.Decorate(domainEventHandler, closedIdempotentHandler);
-            }
-        }
-
-        private void AddIntegrationEventHandlers()
-        {
-            Type[] integrationEventHandlers = AssemblyReference.Assembly
-                .GetTypes()
-                .Where(t => t.IsAssignableTo(typeof(IIntegrationEventHandler)))
-                .ToArray();
-
-            foreach (Type integrationEventHandler in integrationEventHandlers)
-            {
-                services.TryAddScoped(integrationEventHandler);
-
-                Type integrationEvent = integrationEventHandler
-                    .GetInterfaces()
-                    .Single(i => i.IsGenericType)
-                    .GetGenericArguments()
-                    .Single();
-
-                Type closedIdempotentHandler =
-                    typeof(IdempotentIntegrationEventHandler<>).MakeGenericType(integrationEvent);
-
-                services.Decorate(integrationEventHandler, closedIdempotentHandler);
-            }
+            services.AddInbox(inbox, inboxSection);
         }
     }
 }

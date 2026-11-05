@@ -9,7 +9,6 @@ using Evently.Common.Infrastructure.Caching;
 using Evently.Common.Infrastructure.Clock;
 using Evently.Common.Infrastructure.Data;
 using Evently.Common.Infrastructure.EventBus;
-using Evently.Common.Infrastructure.Outbox;
 using MassTransit;
 using MassTransit.Logging;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,8 +44,6 @@ public static class InfrastructureConfiguration
             services.TryAddSingleton<IDateTimeProvider, DateTimeProvider>();
 
             services.TryAddSingleton<IEventBus, EventBus.EventBus>();
-
-            services.TryAddSingleton<InsertOutboxMessagesInterceptor>();
 
             NpgsqlDataSource npgsqlDataSource = new NpgsqlDataSourceBuilder(databaseConnectionString).Build();
             services.TryAddSingleton(npgsqlDataSource);

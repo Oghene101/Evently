@@ -1,5 +1,4 @@
 ﻿using Evently.Common.Application.EventBus;
-using Evently.Common.Application.Exceptions;
 using Evently.Common.Application.Messaging;
 using Evently.Common.Domain;
 using Evently.Modules.Events.Application.Events.GetEvent;
@@ -9,10 +8,12 @@ using MediatR;
 
 namespace Evently.Modules.Events.Application.Events.PublishEvent;
 
-internal sealed class EventPublishedDomainEventHandler(ISender sender, IEventBus eventBus)
+internal sealed class EventPublishedDomainEventHandler(
+    ISender sender,
+    IEventBus eventBus)
     : DomainEventHandler<EventPublishedDomainEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         EventPublishedDomainEvent domainEvent,
         CancellationToken cancellationToken = default)
     {
@@ -20,7 +21,7 @@ internal sealed class EventPublishedDomainEventHandler(ISender sender, IEventBus
 
         if (result.IsFailure)
         {
-            throw new EventlyException(nameof(GetEventQuery), result.Error);
+            return Result.Failure(result.Error);
         }
 
         await eventBus.PublishAsync(
@@ -43,5 +44,7 @@ internal sealed class EventPublishedDomainEventHandler(ISender sender, IEventBus
                     Quantity = t.Quantity
                 }).ToList()),
             cancellationToken);
+
+        return Result.Success();
     }
 }

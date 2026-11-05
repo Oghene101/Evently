@@ -1,14 +1,16 @@
 ﻿using Evently.Common.Application.EventBus;
 using Evently.Common.Application.Messaging;
+using Evently.Common.Domain;
 using Evently.Modules.Events.Domain.TicketTypes;
 using Evently.Modules.Events.IntegrationEvents;
 
 namespace Evently.Modules.Events.Application.TicketTypes.UpdateTicketTypePrice;
 
-internal sealed class TicketTypePriceChangedDomainEventHandler(IEventBus eventBus)
+internal sealed class TicketTypePriceChangedDomainEventHandler(
+    IEventBus eventBus)
     : DomainEventHandler<TicketTypePriceChangedDomainEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         TicketTypePriceChangedDomainEvent domainEvent,
         CancellationToken cancellationToken = default)
     {
@@ -19,5 +21,7 @@ internal sealed class TicketTypePriceChangedDomainEventHandler(IEventBus eventBu
                 domainEvent.TicketTypeId,
                 domainEvent.Price),
             cancellationToken);
+
+        return Result.Success();
     }
 }

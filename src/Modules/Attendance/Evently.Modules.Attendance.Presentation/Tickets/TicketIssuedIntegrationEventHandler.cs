@@ -1,5 +1,4 @@
 ﻿using Evently.Common.Application.EventBus;
-using Evently.Common.Application.Exceptions;
 using Evently.Common.Domain;
 using Evently.Modules.Attendance.Application.Tickets.CreateTicket;
 using Evently.Modules.Ticketing.IntegrationEvents;
@@ -7,10 +6,11 @@ using MediatR;
 
 namespace Evently.Modules.Attendance.Presentation.Tickets;
 
-internal sealed class TicketIssuedIntegrationEventHandler(ISender sender)
+internal sealed class TicketIssuedIntegrationEventHandler(
+    ISender sender)
     : IntegrationEventHandler<TicketIssuedIntegrationEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         TicketIssuedIntegrationEvent integrationEvent,
         CancellationToken cancellationToken = default)
     {
@@ -24,7 +24,9 @@ internal sealed class TicketIssuedIntegrationEventHandler(ISender sender)
 
         if (result.IsFailure)
         {
-            throw new EventlyException(nameof(CreateTicketCommand), result.Error);
+            return Result.Failure(result.Error);
         }
+
+        return Result.Success();
     }
 }

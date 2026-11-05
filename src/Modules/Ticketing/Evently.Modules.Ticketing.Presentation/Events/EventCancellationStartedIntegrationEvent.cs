@@ -1,5 +1,4 @@
 ﻿using Evently.Common.Application.EventBus;
-using Evently.Common.Application.Exceptions;
 using Evently.Common.Domain;
 using Evently.Modules.Events.IntegrationEvents;
 using Evently.Modules.Ticketing.Application.Events.CancelEvent;
@@ -7,10 +6,11 @@ using MediatR;
 
 namespace Evently.Modules.Ticketing.Presentation.Events;
 
-internal sealed class EventCancellationStartedIntegrationEventHandler(ISender sender)
+internal sealed class EventCancellationStartedIntegrationEventHandler(
+    ISender sender)
     : IntegrationEventHandler<EventCancellationStartedIntegrationEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         EventCancellationStartedIntegrationEvent integrationEvent,
         CancellationToken cancellationToken = default)
     {
@@ -18,7 +18,9 @@ internal sealed class EventCancellationStartedIntegrationEventHandler(ISender se
 
         if (result.IsFailure)
         {
-            throw new EventlyException(nameof(CancelEventCommand), result.Error);
+            return Result.Failure(result.Error);
         }
+
+        return Result.Success();
     }
 }

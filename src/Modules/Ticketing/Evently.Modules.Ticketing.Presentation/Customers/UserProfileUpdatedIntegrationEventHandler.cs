@@ -1,5 +1,4 @@
 ﻿using Evently.Common.Application.EventBus;
-using Evently.Common.Application.Exceptions;
 using Evently.Common.Domain;
 using Evently.Modules.Ticketing.Application.Customers.UpdateCustomer;
 using Evently.Modules.Users.IntegrationEvents;
@@ -7,10 +6,11 @@ using MediatR;
 
 namespace Evently.Modules.Ticketing.Presentation.Customers;
 
-internal sealed class UserProfileUpdatedIntegrationEventHandler(ISender sender)
+internal sealed class UserProfileUpdatedIntegrationEventHandler(
+    ISender sender)
     : IntegrationEventHandler<UserProfileUpdatedIntegrationEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         UserProfileUpdatedIntegrationEvent integrationEvent,
         CancellationToken cancellationToken = default)
     {
@@ -23,7 +23,9 @@ internal sealed class UserProfileUpdatedIntegrationEventHandler(ISender sender)
 
         if (result.IsFailure)
         {
-            throw new EventlyException(nameof(UpdateCustomerCommand), result.Error);
+            return Result.Failure(result.Error);
         }
+
+        return Result.Success();
     }
 }

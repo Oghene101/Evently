@@ -1,14 +1,16 @@
 ﻿using Evently.Common.Application.EventBus;
 using Evently.Common.Application.Messaging;
+using Evently.Common.Domain;
 using Evently.Modules.Ticketing.Domain.Events;
 using Evently.Modules.Ticketing.IntegrationEvents;
 
 namespace Evently.Modules.Ticketing.Application.TicketTypes;
 
-internal sealed class TicketTypeSoldOutDomainEventHandler(IEventBus eventBus)
+internal sealed class TicketTypeSoldOutDomainEventHandler(
+    IEventBus eventBus)
     : DomainEventHandler<TicketTypeSoldOutDomainEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         TicketTypeSoldOutDomainEvent domainEvent,
         CancellationToken cancellationToken = default)
     {
@@ -18,5 +20,7 @@ internal sealed class TicketTypeSoldOutDomainEventHandler(IEventBus eventBus)
                 domainEvent.OccurredOnUtc,
                 domainEvent.TicketTypeId),
             cancellationToken);
+
+        return Result.Success();
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿using Evently.Common.Domain;
+using System.Data.Common;
 using Dapper;
 using Evently.Common.Application.Data;
 using Evently.Common.Application.Messaging;
@@ -11,7 +12,7 @@ internal sealed class TicketCreatedDomainEventHandler(
     IEventStatisticsRepository eventStatisticsRepository)
     : DomainEventHandler<TicketCreatedDomainEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         TicketCreatedDomainEvent domainEvent,
         CancellationToken cancellationToken = default)
     {
@@ -32,5 +33,7 @@ internal sealed class TicketCreatedDomainEventHandler(
         eventStatistics.TicketsSold = ticketCount;
 
         await eventStatisticsRepository.ReplaceAsync(eventStatistics, cancellationToken);
+
+        return Result.Success();
     }
 }

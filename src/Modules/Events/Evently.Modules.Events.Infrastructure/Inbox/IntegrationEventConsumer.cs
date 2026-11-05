@@ -9,7 +9,8 @@ using Newtonsoft.Json;
 
 namespace Evently.Modules.Events.Infrastructure.Inbox;
 
-internal sealed class IntegrationEventConsumer<TIntegrationEvent>(IDbConnectionFactory dbConnectionFactory)
+internal sealed class IntegrationEventConsumer<TIntegrationEvent>(
+    IDbConnectionFactory dbConnectionFactory)
     : IConsumer<TIntegrationEvent>
     where TIntegrationEvent : IntegrationEvent
 {
@@ -23,14 +24,15 @@ internal sealed class IntegrationEventConsumer<TIntegrationEvent>(IDbConnectionF
         {
             Id = integrationEvent.Id,
             Type = integrationEvent.GetType().Name,
+            Lane = InboxLanes.Of(integrationEvent),
             Content = JsonConvert.SerializeObject(integrationEvent, SerializerSettings.Instance),
             OccurredOnUtc = integrationEvent.OccurredOnUtc
         };
 
         const string sql =
             """
-            INSERT INTO events.inbox_messages(id, type, content, occurred_on_utc)
-            VALUES (@Id, @Type, @Content::json, @OccurredOnUtc)
+            INSERT INTO events.inbox_messages(id, type, lane, content, occurred_on_utc)
+            VALUES (@Id, @Type, @Lane, @Content::json, @OccurredOnUtc)
             """;
 
         await connection.ExecuteAsync(sql, inboxMessage);

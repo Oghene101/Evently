@@ -1,12 +1,14 @@
 ﻿using Evently.Common.Application.Messaging;
+using Evently.Common.Domain;
 using Evently.Modules.Attendance.Domain.Attendees;
 
 namespace Evently.Modules.Attendance.Application.EventStatistics.Projections;
 
-internal sealed class DuplicateCheckInAttemptedDomainEventHandler(IEventStatisticsRepository eventStatisticsRepository)
+internal sealed class DuplicateCheckInAttemptedDomainEventHandler(
+    IEventStatisticsRepository eventStatisticsRepository)
     : DomainEventHandler<DuplicateCheckInAttemptedDomainEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         DuplicateCheckInAttemptedDomainEvent domainEvent,
         CancellationToken cancellationToken = default)
     {
@@ -22,5 +24,7 @@ internal sealed class DuplicateCheckInAttemptedDomainEventHandler(IEventStatisti
         });
 
         await eventStatisticsRepository.ReplaceAsync(eventStatistics, cancellationToken);
+
+        return Result.Success();
     }
 }

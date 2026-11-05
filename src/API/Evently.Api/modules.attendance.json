@@ -1,12 +1,30 @@
 {
   "Attendance": {
     "Outbox": {
-      "IntervalInSeconds": 5,
-      "BatchSize": 50
+      "LeaseSeconds": 120,
+      "RetentionDays": 7,
+      "PurgeIntervalMinutes": 60,
+      "Lanes": {
+        "Default": {
+          "Concurrency": 1,
+          "PollIntervalMilliseconds": 500,
+          "MaxRetries": 5,
+          "RetryDelaySeconds": 10
+        }
+      }
     },
     "Inbox": {
-      "IntervalInSeconds": 5,
-      "BatchSize": 50
+      "LeaseSeconds": 120,
+      "RetentionDays": 30,
+      "PurgeIntervalMinutes": 60,
+      "Lanes": {
+        "Default": {
+          "Concurrency": 1,
+          "PollIntervalMilliseconds": 500,
+          "MaxRetries": 5,
+          "RetryDelaySeconds": 10
+        }
+      }
     }
   }
 }

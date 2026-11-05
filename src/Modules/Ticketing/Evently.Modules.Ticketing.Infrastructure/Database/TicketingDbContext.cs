@@ -17,7 +17,8 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Evently.Modules.Ticketing.Infrastructure.Database;
 
-public sealed class TicketingDbContext(DbContextOptions<TicketingDbContext> options)
+public sealed class TicketingDbContext(
+    DbContextOptions<TicketingDbContext> options)
     : DbContext(options), IUnitOfWork
 {
     internal DbSet<Customer> Customers { get; set; }
@@ -40,8 +41,10 @@ public sealed class TicketingDbContext(DbContextOptions<TicketingDbContext> opti
 
         modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
         modelBuilder.ApplyConfiguration(new OutboxMessageConsumerConfiguration());
+        modelBuilder.ApplyConfiguration(new DeadLetteredOutboxMessageConfiguration());
         modelBuilder.ApplyConfiguration(new InboxMessageConfiguration());
         modelBuilder.ApplyConfiguration(new InboxMessageConsumerConfiguration());
+        modelBuilder.ApplyConfiguration(new DeadLetteredInboxMessageConfiguration());
         modelBuilder.ApplyConfiguration(new CustomerConfiguration());
         modelBuilder.ApplyConfiguration(new EventConfiguration());
         modelBuilder.ApplyConfiguration(new TicketTypeConfiguration());

@@ -1,5 +1,4 @@
 ﻿using Evently.Common.Application.EventBus;
-using Evently.Common.Application.Exceptions;
 using Evently.Common.Application.Messaging;
 using Evently.Common.Domain;
 using Evently.Modules.Ticketing.Application.Orders.GetOrder;
@@ -9,10 +8,12 @@ using MediatR;
 
 namespace Evently.Modules.Ticketing.Application.Orders.CreateOrder;
 
-internal sealed class OrderCreatedDomainEventHandler(ISender sender, IEventBus eventBus)
+internal sealed class OrderCreatedDomainEventHandler(
+    ISender sender,
+    IEventBus eventBus)
     : DomainEventHandler<OrderCreatedDomainEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         OrderCreatedDomainEvent notification,
         CancellationToken cancellationToken = default)
     {
@@ -20,7 +21,7 @@ internal sealed class OrderCreatedDomainEventHandler(ISender sender, IEventBus e
 
         if (result.IsFailure)
         {
-            throw new EventlyException(nameof(GetOrderQuery), result.Error);
+            return Result.Failure(result.Error);
         }
 
         await eventBus.PublishAsync(
@@ -42,5 +43,7 @@ internal sealed class OrderCreatedDomainEventHandler(ISender sender, IEventBus e
                     Quantity = oi.Quantity
                 }).ToList()),
             cancellationToken);
+
+        return Result.Success();
     }
 }

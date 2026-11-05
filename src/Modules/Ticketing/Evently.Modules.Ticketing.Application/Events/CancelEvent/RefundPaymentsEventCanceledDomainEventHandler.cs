@@ -1,5 +1,4 @@
-﻿using Evently.Common.Application.Exceptions;
-using Evently.Common.Application.Messaging;
+﻿using Evently.Common.Application.Messaging;
 using Evently.Common.Domain;
 using Evently.Modules.Ticketing.Application.Payments.RefundPaymentsForEvent;
 using Evently.Modules.Ticketing.Domain.Events;
@@ -7,10 +6,11 @@ using MediatR;
 
 namespace Evently.Modules.Ticketing.Application.Events.CancelEvent;
 
-internal sealed class RefundPaymentsEventCanceledDomainEventHandler(ISender sender)
+internal sealed class RefundPaymentsEventCanceledDomainEventHandler(
+    ISender sender)
     : DomainEventHandler<EventCanceledDomainEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         EventCanceledDomainEvent domainEvent,
         CancellationToken cancellationToken = default)
     {
@@ -18,7 +18,9 @@ internal sealed class RefundPaymentsEventCanceledDomainEventHandler(ISender send
 
         if (result.IsFailure)
         {
-            throw new EventlyException(nameof(RefundPaymentsForEventCommand), result.Error);
+            return Result.Failure(result.Error);
         }
+
+        return Result.Success();
     }
 }

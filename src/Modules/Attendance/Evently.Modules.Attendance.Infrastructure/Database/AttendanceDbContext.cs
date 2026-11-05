@@ -11,7 +11,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Evently.Modules.Attendance.Infrastructure.Database;
 
-public sealed class AttendanceDbContext(DbContextOptions<AttendanceDbContext> options)
+public sealed class AttendanceDbContext(
+    DbContextOptions<AttendanceDbContext> options)
     : DbContext(options), IUnitOfWork
 {
     internal DbSet<Attendee> Attendees { get; set; }
@@ -26,8 +27,10 @@ public sealed class AttendanceDbContext(DbContextOptions<AttendanceDbContext> op
 
         modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
         modelBuilder.ApplyConfiguration(new OutboxMessageConsumerConfiguration());
+        modelBuilder.ApplyConfiguration(new DeadLetteredOutboxMessageConfiguration());
         modelBuilder.ApplyConfiguration(new InboxMessageConfiguration());
         modelBuilder.ApplyConfiguration(new InboxMessageConsumerConfiguration());
+        modelBuilder.ApplyConfiguration(new DeadLetteredInboxMessageConfiguration());
         modelBuilder.ApplyConfiguration(new AttendeeConfiguration());
         modelBuilder.ApplyConfiguration(new EventConfiguration());
         modelBuilder.ApplyConfiguration(new TicketConfiguration());

@@ -42,15 +42,15 @@ Each module follows Clean Architecture and is made of five projects:
 | ------------------- | --------------------------------------------------------------------------- |
 | `Domain`            | Entities, domain events, repository interfaces, `Result`-based errors       |
 | `Application`       | CQRS commands and queries (MediatR), validators, domain event handlers      |
-| `Infrastructure`    | EF Core `DbContext`, repositories, outbox and inbox jobs, module wiring     |
+| `Infrastructure`    | EF Core `DbContext`, repositories, outbox and inbox lanes, module wiring    |
 | `Presentation`      | Minimal API endpoints and integration event handlers                        |
 | `IntegrationEvents` | The module's public contract, the only project other modules may reference  |
 
 Key patterns:
 
 - **CQRS**: commands go through EF Core, queries read with Dapper. MediatR pipeline behaviours add validation (FluentValidation), request logging and exception handling.
-- **Transactional outbox**: an EF Core interceptor stores domain events in the module's `outbox_messages` table in the same transaction as the state change. A Quartz job publishes them afterwards.
-- **Inbox**: integration events consumed from RabbitMQ are stored in `inbox_messages` and processed by a second Quartz job. Handlers are wrapped in idempotent decorators, so a redelivered message is not handled twice.
+- **Transactional outbox**: an EF Core interceptor stores domain events in the module's `outbox_messages` table in the same transaction as the state change. A background processor per lane claims them with a lease (`FOR UPDATE SKIP LOCKED`, so several instances can share the work), runs their handlers and clears the content once handled. A `Dependency` failure or an exception is retried with exponential backoff; any other failure, or spent retries, moves the message to `dead_lettered_outbox_messages`.
+- **Inbox**: integration events consumed from RabbitMQ are stored in `inbox_messages` and processed the same way, with `dead_lettered_inbox_messages` for final failures. Handlers are wrapped in idempotent decorators, so a redelivered message is not handled twice. Quartz jobs purge processed outbox and inbox messages after their retention period.
 - **Saga**: cancelling an event is coordinated by `CancelEventSaga`, a MassTransit state machine persisted in Redis. It waits for Ticketing to refund payments and archive tickets before it publishes the completion event.
 - **Module isolation**: each module owns a PostgreSQL schema (`events`, `users`, `ticketing`, `attendance`). Architecture tests fail the build if one module references another module's internals.
 
@@ -80,7 +80,7 @@ Integration events between modules:
 | --------------- | ----------------------------------------------------------------- |
 | Runtime         | .NET 10, ASP.NET Core Minimal APIs, API versioning                |
 | Data            | PostgreSQL (EF Core and Dapper), MongoDB, Redis                   |
-| Messaging       | MassTransit on RabbitMQ, Quartz.NET for outbox and inbox jobs     |
+| Messaging       | MassTransit on RabbitMQ, Quartz.NET for outbox and inbox purges   |
 | Identity        | Keycloak (JWT bearer), permission-based authorization             |
 | Gateway         | YARP reverse proxy                                                |
 | Observability   | Serilog and Seq for logs, OpenTelemetry and Jaeger for traces     |
@@ -219,7 +219,7 @@ SELECT id, 'Administrator' FROM users.users WHERE email = 'jane@example.com';
 | File                                             | Contents                                                              |
 | ------------------------------------------------ | --------------------------------------------------------------------- |
 | `src/API/Evently.Api/appsettings*.json`          | Connection strings, JWT validation, Serilog, OTLP endpoint            |
-| `src/API/Evently.Api/modules.<module>*.json`     | Per-module outbox and inbox interval and batch size, Keycloak clients |
+| `src/API/Evently.Api/modules.<module>*.json`     | Per-module outbox and inbox lease, retention and lanes, Keycloak clients |
 | `src/API/Evently.Gateway/appsettings*.json`      | JWT validation and YARP routes                                        |
 
 The base files hold empty placeholders and the `Development` files hold the values for the Docker Compose environment. Override any value with environment variables, for example `ConnectionStrings__Database`.

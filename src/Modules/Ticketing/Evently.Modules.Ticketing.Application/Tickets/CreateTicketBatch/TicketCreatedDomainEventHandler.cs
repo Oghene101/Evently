@@ -1,5 +1,4 @@
 ﻿using Evently.Common.Application.EventBus;
-using Evently.Common.Application.Exceptions;
 using Evently.Common.Application.Messaging;
 using Evently.Common.Domain;
 using Evently.Modules.Ticketing.Application.Tickets.GetTicket;
@@ -9,10 +8,12 @@ using MediatR;
 
 namespace Evently.Modules.Ticketing.Application.Tickets.CreateTicketBatch;
 
-internal sealed class TicketCreatedDomainEventHandler(ISender sender, IEventBus eventBus)
+internal sealed class TicketCreatedDomainEventHandler(
+    ISender sender,
+    IEventBus eventBus)
     : DomainEventHandler<TicketCreatedDomainEvent>
 {
-    public override async Task Handle(
+    public override async Task<Result> Handle(
         TicketCreatedDomainEvent domainEvent,
         CancellationToken cancellationToken = default)
     {
@@ -22,7 +23,7 @@ internal sealed class TicketCreatedDomainEventHandler(ISender sender, IEventBus 
 
         if (result.IsFailure)
         {
-            throw new EventlyException(nameof(GetTicketQuery), result.Error);
+            return Result.Failure(result.Error);
         }
 
         await eventBus.PublishAsync(
@@ -34,5 +35,7 @@ internal sealed class TicketCreatedDomainEventHandler(ISender sender, IEventBus 
                 result.Value.EventId,
                 result.Value.Code),
             cancellationToken);
+
+        return Result.Success();
     }
 }

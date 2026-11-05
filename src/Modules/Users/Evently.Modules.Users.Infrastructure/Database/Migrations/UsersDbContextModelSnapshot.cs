@@ -18,10 +18,50 @@ namespace Evently.Modules.Users.Infrastructure.Database.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("users")
-                .HasAnnotation("ProductVersion", "8.0.4")
+                .HasAnnotation("ProductVersion", "10.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Evently.Common.Infrastructure.Inbox.DeadLetteredInboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("DeadLetteredOnUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dead_lettered_on_utc");
+
+                    b.Property<string>("Error")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("error");
+
+                    b.Property<DateTime>("OccurredOnUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_on_utc");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("retry_count");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_dead_lettered_inbox_messages");
+
+                    b.ToTable("dead_lettered_inbox_messages", "users");
+                });
 
             modelBuilder.Entity("Evently.Common.Infrastructure.Inbox.InboxMessage", b =>
                 {
@@ -29,6 +69,10 @@ namespace Evently.Modules.Users.Infrastructure.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<DateTime?>("ClaimedUntilUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("claimed_until_utc");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -40,6 +84,18 @@ namespace Evently.Modules.Users.Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("error");
 
+                    b.Property<string>("Lane")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Default")
+                        .HasColumnName("lane");
+
+                    b.Property<DateTime?>("NextRetryOnUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_retry_on_utc");
+
                     b.Property<DateTime>("OccurredOnUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("occurred_on_utc");
@@ -48,6 +104,10 @@ namespace Evently.Modules.Users.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("processed_on_utc");
 
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("retry_count");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("text")
@@ -55,6 +115,10 @@ namespace Evently.Modules.Users.Infrastructure.Database.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_inbox_messages");
+
+                    b.HasIndex("Lane", "OccurredOnUtc")
+                        .HasDatabaseName("ix_inbox_messages_unprocessed")
+                        .HasFilter("processed_on_utc IS NULL");
 
                     b.ToTable("inbox_messages", "users");
                 });
@@ -76,12 +140,56 @@ namespace Evently.Modules.Users.Infrastructure.Database.Migrations
                     b.ToTable("inbox_message_consumers", "users");
                 });
 
+            modelBuilder.Entity("Evently.Common.Infrastructure.Outbox.DeadLetteredOutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("DeadLetteredOnUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("dead_lettered_on_utc");
+
+                    b.Property<string>("Error")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("error");
+
+                    b.Property<DateTime>("OccurredOnUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_on_utc");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("retry_count");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_dead_lettered_outbox_messages");
+
+                    b.ToTable("dead_lettered_outbox_messages", "users");
+                });
+
             modelBuilder.Entity("Evently.Common.Infrastructure.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<DateTime?>("ClaimedUntilUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("claimed_until_utc");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -93,6 +201,18 @@ namespace Evently.Modules.Users.Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("error");
 
+                    b.Property<string>("Lane")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Default")
+                        .HasColumnName("lane");
+
+                    b.Property<DateTime?>("NextRetryOnUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_retry_on_utc");
+
                     b.Property<DateTime>("OccurredOnUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("occurred_on_utc");
@@ -101,6 +221,10 @@ namespace Evently.Modules.Users.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("processed_on_utc");
 
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("retry_count");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("text")
@@ -108,6 +232,10 @@ namespace Evently.Modules.Users.Infrastructure.Database.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_outbox_messages");
+
+                    b.HasIndex("Lane", "OccurredOnUtc")
+                        .HasDatabaseName("ix_outbox_messages_unprocessed")
+                        .HasFilter("processed_on_utc IS NULL");
 
                     b.ToTable("outbox_messages", "users");
                 });
