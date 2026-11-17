@@ -13,7 +13,7 @@ public sealed class EventPublishedIntegrationEvent : IntegrationEvent
         string location,
         DateTime startsAtUtc,
         DateTime? endsAtUtc,
-        List<TicketTypeModel> ticketTypes)
+        IReadOnlyList<TicketTypeModel> ticketTypes)
         : base(id, occurredOnUtc)
     {
         EventId = eventId;
@@ -37,5 +37,5 @@ public sealed class EventPublishedIntegrationEvent : IntegrationEvent
 
     public DateTime? EndsAtUtc { get; init; }
 
-    public List<TicketTypeModel> TicketTypes { get; init; }
+    public IReadOnlyList<TicketTypeModel> TicketTypes { get; init; }
 }

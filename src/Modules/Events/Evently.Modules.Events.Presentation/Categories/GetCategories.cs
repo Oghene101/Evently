@@ -16,7 +16,7 @@ internal sealed class GetCategories : IEndpoint
     {
         app.MapGet("categories", async (ISender sender) =>
             {
-                Result<IReadOnlyCollection<CategoryResponse>> result = await sender.Send(new GetCategoriesQuery());
+                Result<IReadOnlyList<CategoryResponse>> result = await sender.Send(new GetCategoriesQuery());
 
                 return result.Match(Results.Ok, ApiResults.Problem);
             })

@@ -16,7 +16,7 @@ internal sealed class GetTicketsForOrder : IEndpoint
     {
         app.MapGet("tickets/order/{orderId}", async (Guid orderId, ISender sender) =>
             {
-                Result<IReadOnlyCollection<TicketResponse>> result = await sender.Send(
+                Result<IReadOnlyList<TicketResponse>> result = await sender.Send(
                     new GetTicketsForOrderQuery(orderId));
 
                 return result.Match(Results.Ok, ApiResults.Problem);

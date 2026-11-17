@@ -16,7 +16,7 @@ internal sealed class GetOrders : IEndpoint
     {
         app.MapGet("orders", async (ICustomerContext customerContext, ISender sender) =>
             {
-                Result<IReadOnlyCollection<OrderResponse>> result = await sender.Send(
+                Result<IReadOnlyList<OrderResponse>> result = await sender.Send(
                     new GetOrdersQuery(customerContext.CustomerId));
 
                 return result.Match(Results.Ok, ApiResults.Problem);

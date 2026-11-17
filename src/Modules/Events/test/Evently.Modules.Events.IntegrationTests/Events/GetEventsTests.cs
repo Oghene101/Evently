@@ -21,7 +21,7 @@ public class GetEventsTests : BaseIntegrationTest
         var query = new GetEventsQuery();
 
         // Act
-        Result<IReadOnlyCollection<EventResponse>> result = await Sender.Send(query);
+        Result<IReadOnlyList<EventResponse>> result = await Sender.Send(query);
 
         // Assert
         result.Value.Should().BeEmpty();
@@ -41,7 +41,7 @@ public class GetEventsTests : BaseIntegrationTest
         var query = new GetEventsQuery();
 
         // Act
-        Result<IReadOnlyCollection<EventResponse>> result = await Sender.Send(query);
+        Result<IReadOnlyList<EventResponse>> result = await Sender.Send(query);
 
         // Assert
         result.Value.Should().HaveCount(2);

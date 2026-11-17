@@ -11,7 +11,7 @@ public sealed class OrderCreatedIntegrationEvent : IntegrationEvent
         Guid customerId,
         decimal totalPrice,
         DateTime createdAtUtc,
-        List<OrderItemModel> orderItems)
+        IReadOnlyList<OrderItemModel> orderItems)
         : base(id, occuredOnUtc)
     {
         OrderId = orderId;
@@ -29,5 +29,5 @@ public sealed class OrderCreatedIntegrationEvent : IntegrationEvent
 
     public DateTime CreatedAtUtc { get; init; }
 
-    public List<OrderItemModel> OrderItems { get; init; }
+    public IReadOnlyList<OrderItemModel> OrderItems { get; init; }
 }

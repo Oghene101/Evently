@@ -7,7 +7,8 @@ using Evently.Modules.Events.Domain.Events;
 
 namespace Evently.Modules.Events.Application.Events.GetEvent;
 
-internal sealed class GetEventQueryHandler(IDbConnectionFactory dbConnectionFactory)
+internal sealed class GetEventQueryHandler(
+    IDbConnectionFactory dbConnectionFactory)
     : IQueryHandler<GetEventQuery, EventResponse>
 {
     public async Task<Result<EventResponse>> Handle(GetEventQuery request, CancellationToken cancellationToken)
@@ -34,23 +35,19 @@ internal sealed class GetEventQueryHandler(IDbConnectionFactory dbConnectionFact
              WHERE e.id = @EventId
              """;
 
-        Dictionary<Guid, EventResponse> eventsDictionary = [];
+        EventResponse? eventResponse = null;
+
+        List<TicketTypeResponse> ticketTypes = [];
+
         await connection.QueryAsync<EventResponse, TicketTypeResponse?, EventResponse>(
             sql,
             (@event, ticketType) =>
             {
-                if (eventsDictionary.TryGetValue(@event.Id, out EventResponse? existingEvent))
-                {
-                    @event = existingEvent;
-                }
-                else
-                {
-                    eventsDictionary.Add(@event.Id, @event);
-                }
+                eventResponse ??= @event;
 
                 if (ticketType is not null)
                 {
-                    @event.TicketTypes.Add(ticketType);
+                    ticketTypes.Add(ticketType);
                 }
 
                 return @event;
@@ -58,11 +55,11 @@ internal sealed class GetEventQueryHandler(IDbConnectionFactory dbConnectionFact
             request,
             splitOn: nameof(TicketTypeResponse.TicketTypeId));
 
-        if (!eventsDictionary.TryGetValue(request.EventId, out EventResponse eventResponse))
+        if (eventResponse is null)
         {
             return Result.Failure<EventResponse>(EventErrors.NotFound(request.EventId));
         }
 
-        return eventResponse;
+        return eventResponse with { TicketTypes = ticketTypes };
     }
 }

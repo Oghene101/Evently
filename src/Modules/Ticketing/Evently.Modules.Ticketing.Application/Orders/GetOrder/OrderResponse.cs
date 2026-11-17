@@ -9,5 +9,5 @@ public sealed record OrderResponse(
     decimal TotalPrice,
     DateTime CreatedAtUtc)
 {
-    public List<OrderItemResponse> OrderItems { get; } = [];
+    public IReadOnlyList<OrderItemResponse> OrderItems { get; init; } = [];
 }

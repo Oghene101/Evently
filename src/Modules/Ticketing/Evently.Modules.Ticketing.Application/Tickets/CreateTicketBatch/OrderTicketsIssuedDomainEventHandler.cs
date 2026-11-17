@@ -15,7 +15,7 @@ internal sealed class OrderTicketsIssuedDomainEventHandler(
         OrderTicketsIssuedDomainEvent domainEvent,
         CancellationToken cancellationToken = default)
     {
-        Result<IReadOnlyCollection<TicketResponse>> result = await sender.Send(
+        Result<IReadOnlyList<TicketResponse>> result = await sender.Send(
             new GetTicketsForOrderQuery(domainEvent.OrderId), cancellationToken);
 
         if (result.IsFailure)

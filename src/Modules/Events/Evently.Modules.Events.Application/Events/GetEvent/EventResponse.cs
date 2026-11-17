@@ -9,5 +9,5 @@ public sealed record EventResponse(
     DateTime StartsAtUtc,
     DateTime? EndsAtUtc)
 {
-    public List<TicketTypeResponse> TicketTypes { get; } = [];
+    public IReadOnlyList<TicketTypeResponse> TicketTypes { get; init; } = [];
 }

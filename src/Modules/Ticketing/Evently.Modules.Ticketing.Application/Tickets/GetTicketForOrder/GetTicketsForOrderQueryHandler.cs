@@ -7,10 +7,11 @@ using Evently.Modules.Ticketing.Application.Tickets.GetTicket;
 
 namespace Evently.Modules.Ticketing.Application.Tickets.GetTicketForOrder;
 
-internal sealed class GetTicketsForOrderQueryHandler(IDbConnectionFactory dbConnectionFactory)
-    : IQueryHandler<GetTicketsForOrderQuery, IReadOnlyCollection<TicketResponse>>
+internal sealed class GetTicketsForOrderQueryHandler(
+    IDbConnectionFactory dbConnectionFactory)
+    : IQueryHandler<GetTicketsForOrderQuery, IReadOnlyList<TicketResponse>>
 {
-    public async Task<Result<IReadOnlyCollection<TicketResponse>>> Handle(
+    public async Task<Result<IReadOnlyList<TicketResponse>>> Handle(
         GetTicketsForOrderQuery request,
         CancellationToken cancellationToken)
     {

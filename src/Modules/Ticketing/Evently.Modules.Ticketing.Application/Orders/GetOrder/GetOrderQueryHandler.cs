@@ -7,7 +7,8 @@ using Evently.Modules.Ticketing.Domain.Orders;
 
 namespace Evently.Modules.Ticketing.Application.Orders.GetOrder;
 
-internal sealed class GetOrderQueryHandler(IDbConnectionFactory dbConnectionFactory)
+internal sealed class GetOrderQueryHandler(
+    IDbConnectionFactory dbConnectionFactory)
     : IQueryHandler<GetOrderQuery, OrderResponse>
 {
     public async Task<Result<OrderResponse>> Handle(GetOrderQuery request, CancellationToken cancellationToken)
@@ -34,32 +35,28 @@ internal sealed class GetOrderQueryHandler(IDbConnectionFactory dbConnectionFact
              WHERE o.id = @OrderId
              """;
 
-        Dictionary<Guid, OrderResponse> ordersDictionary = [];
+        OrderResponse? orderResponse = null;
+
+        List<OrderItemResponse> orderItems = [];
+
         await connection.QueryAsync<OrderResponse, OrderItemResponse, OrderResponse>(
             sql,
             (order, orderItem) =>
             {
-                if (ordersDictionary.TryGetValue(order.Id, out OrderResponse? existingEvent))
-                {
-                    order = existingEvent;
-                }
-                else
-                {
-                    ordersDictionary.Add(order.Id, order);
-                }
+                orderResponse ??= order;
 
-                order.OrderItems.Add(orderItem);
+                orderItems.Add(orderItem);
 
                 return order;
             },
             request,
             splitOn: nameof(OrderItemResponse.OrderItemId));
 
-        if (!ordersDictionary.TryGetValue(request.OrderId, out OrderResponse orderResponse))
+        if (orderResponse is null)
         {
             return Result.Failure<OrderResponse>(OrderErrors.NotFound(request.OrderId));
         }
 
-        return orderResponse;
+        return orderResponse with { OrderItems = orderItems };
     }
 }

@@ -22,7 +22,7 @@ public class GetTicketTypesTests : BaseIntegrationTest
         var query = new GetTicketTypesQuery(Guid.NewGuid());
 
         // Act
-        Result<IReadOnlyCollection<TicketTypeResponse>> result = await Sender.Send(query);
+        Result<IReadOnlyList<TicketTypeResponse>> result = await Sender.Send(query);
 
         // Assert
         result.Value.Should().BeEmpty();
@@ -43,7 +43,7 @@ public class GetTicketTypesTests : BaseIntegrationTest
         var query = new GetTicketTypesQuery(eventId);
 
         // Act
-        Result<IReadOnlyCollection<TicketTypeResponse>> result = await Sender.Send(query);
+        Result<IReadOnlyList<TicketTypeResponse>> result = await Sender.Send(query);
 
         // Assert
         result.Value.Should().HaveCount(2);

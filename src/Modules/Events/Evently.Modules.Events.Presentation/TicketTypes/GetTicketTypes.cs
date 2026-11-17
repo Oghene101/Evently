@@ -16,7 +16,7 @@ internal sealed class GetTicketTypes : IEndpoint
     {
         app.MapGet("ticket-types", async (Guid eventId, ISender sender) =>
             {
-                Result<IReadOnlyCollection<TicketTypeResponse>> result = await sender.Send(
+                Result<IReadOnlyList<TicketTypeResponse>> result = await sender.Send(
                     new GetTicketTypesQuery(eventId));
 
                 return result.Match(Results.Ok, ApiResults.Problem);

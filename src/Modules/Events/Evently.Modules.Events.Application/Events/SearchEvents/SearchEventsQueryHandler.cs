@@ -8,7 +8,8 @@ using Evently.Modules.Events.Domain.Events;
 
 namespace Evently.Modules.Events.Application.Events.SearchEvents;
 
-internal sealed class SearchEventsQueryHandler(IDbConnectionFactory dbConnectionFactory)
+internal sealed class SearchEventsQueryHandler(
+    IDbConnectionFactory dbConnectionFactory)
     : IQueryHandler<SearchEventsQuery, SearchEventsResponse>
 {
     public async Task<Result<SearchEventsResponse>> Handle(
@@ -25,14 +26,14 @@ internal sealed class SearchEventsQueryHandler(IDbConnectionFactory dbConnection
             request.PageSize,
             (request.Page - 1) * request.PageSize);
 
-        IReadOnlyCollection<EventResponse> events = await GetEventsAsync(connection, parameters);
+        IReadOnlyList<EventResponse> events = await GetEventsAsync(connection, parameters);
 
         int totalCount = await CountEventsAsync(connection, parameters);
 
         return new SearchEventsResponse(request.Page, request.PageSize, totalCount, events);
     }
 
-    private static async Task<IReadOnlyCollection<EventResponse>> GetEventsAsync(
+    private static async Task<IReadOnlyList<EventResponse>> GetEventsAsync(
         DbConnection connection,
         SearchEventsParameters parameters)
     {

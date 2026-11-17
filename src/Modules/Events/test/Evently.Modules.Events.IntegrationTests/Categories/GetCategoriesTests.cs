@@ -22,7 +22,7 @@ public class GetCategoriesTests : BaseIntegrationTest
         var query = new GetCategoriesQuery();
 
         // Act
-        Result<IReadOnlyCollection<CategoryResponse>> result = await Sender.Send(query);
+        Result<IReadOnlyList<CategoryResponse>> result = await Sender.Send(query);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -41,7 +41,7 @@ public class GetCategoriesTests : BaseIntegrationTest
         var query = new GetCategoriesQuery();
 
         // Act
-        Result<IReadOnlyCollection<CategoryResponse>> result = await Sender.Send(query);
+        Result<IReadOnlyList<CategoryResponse>> result = await Sender.Send(query);
 
         // Assert
         result.IsSuccess.Should().BeTrue();

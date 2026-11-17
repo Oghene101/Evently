@@ -3,4 +3,4 @@ using Evently.Modules.Ticketing.Application.Tickets.GetTicket;
 
 namespace Evently.Modules.Ticketing.Application.Tickets.GetTicketForOrder;
 
-public sealed record GetTicketsForOrderQuery(Guid OrderId) : IQuery<IReadOnlyCollection<TicketResponse>>;
+public sealed record GetTicketsForOrderQuery(Guid OrderId) : IQuery<IReadOnlyList<TicketResponse>>;
