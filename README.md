@@ -1,6 +1,6 @@
 # Evently
 
-Evently is an event management and ticketing platform built as a **modular monolith** on .NET 10. Organisers create and publish events, customers buy tickets, and attendees check in at the door.
+Evently is an event management and ticketing platform built as a **modular monolith** on .NET 11. Organisers create and publish events, customers buy tickets, and attendees check in at the door.
 
 The codebase is split into four independent modules that share one deployable API but talk to each other only through asynchronous integration events.
 
@@ -78,7 +78,7 @@ Integration events between modules:
 
 | Area            | Technology                                                        |
 | --------------- | ----------------------------------------------------------------- |
-| Runtime         | .NET 10, ASP.NET Core Minimal APIs, API versioning                |
+| Runtime         | .NET 11, ASP.NET Core Minimal APIs, API versioning                |
 | Data            | PostgreSQL (EF Core and Dapper), MongoDB, Redis                   |
 | Messaging       | MassTransit on RabbitMQ, Quartz.NET for outbox and inbox purges   |
 | Identity        | Keycloak (JWT bearer), permission-based authorization             |
@@ -92,7 +92,7 @@ Integration events between modules:
 
 ### Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [.NET 11 SDK](https://dotnet.microsoft.com/download)
 - [Docker](https://www.docker.com/) with Docker Compose
 
 ### Run with Docker Compose
