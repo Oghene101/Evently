@@ -1,4 +1,4 @@
-﻿namespace Evently.Gateway.OpenTelemetry;
+﻿namespace Evently.Gateway.Infrastructure.Observability;
 
 #pragma warning disable CA1515
 public static class DiagnosticsConfig

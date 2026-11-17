@@ -1,6 +1,6 @@
 using Evently.Api.Extensions;
+using Evently.Api.Infrastructure.Observability;
 using Evently.Api.Middleware;
-using Evently.Api.OpenTelemetry;
 using Evently.Common.Application;
 using Evently.Common.Infrastructure;
 using Evently.Common.Infrastructure.Configuration;

@@ -1,6 +1,6 @@
 using Evently.Gateway.Authentication;
+using Evently.Gateway.Infrastructure.Observability;
 using Evently.Gateway.Middleware;
-using Evently.Gateway.OpenTelemetry;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
