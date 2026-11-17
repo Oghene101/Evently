@@ -7,6 +7,7 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+
 COPY ["Directory.Build.props", "."]
 COPY ["Directory.Packages.props", "."]
 COPY ["src/API/Evently.Api/Evently.Api.csproj", "src/API/Evently.Api/"]
@@ -34,14 +35,16 @@ COPY ["src/Modules/Users/Evently.Modules.Users.Infrastructure/Evently.Modules.Us
 COPY ["src/Modules/Users/Evently.Modules.Users.Domain/Evently.Modules.Users.Domain.csproj", "src/Modules/Users/Evently.Modules.Users.Domain/"]
 COPY ["src/Modules/Users/Evently.Modules.Users.Presentation/Evently.Modules.Users.Presentation.csproj", "src/Modules/Users/Evently.Modules.Users.Presentation/"]
 COPY ["src/Modules/Users/Evently.Modules.Users.Application/Evently.Modules.Users.Application.csproj", "src/Modules/Users/Evently.Modules.Users.Application/"]
+
 RUN dotnet restore "src/API/Evently.Api/Evently.Api.csproj"
 COPY . .
 WORKDIR "/src/src/API/Evently.Api"
-RUN dotnet build "./Evently.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+RUN dotnet build "./Evently.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./Evently.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./Evently.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM base AS final
 WORKDIR /app
