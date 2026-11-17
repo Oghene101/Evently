@@ -9,12 +9,15 @@ namespace Evently.Common.Infrastructure.Messaging;
 
 // Claims only as many messages as it has free slots and refills a slot as soon as its message finishes. Instances
 // share a lane through SKIP LOCKED; a lapsed lease (its instance died) lets another instance claim the message.
+// An idle lane doubles its wait after each empty claim up to MaxPollIntervalMilliseconds, unless a message stored in
+// this instance wakes it first.
 public sealed class MessageLaneProcessor(
     MessageTable table,
     string lane,
     MessageLaneSettings laneSettings,
     int leaseSeconds,
     MessageProcessor messageProcessor,
+    LaneWakeUps laneWakeUps,
     IServiceScopeFactory serviceScopeFactory,
     IDateTimeProvider dateTimeProvider,
     ILogger<MessageLaneProcessor> logger) : BackgroundService
@@ -22,6 +25,12 @@ public sealed class MessageLaneProcessor(
     private static readonly TimeSpan ClaimFailureBackoff = TimeSpan.FromSeconds(5);
 
     private readonly SemaphoreSlim _freeSlots = new(laneSettings.Concurrency, laneSettings.Concurrency);
+
+    private readonly TimeSpan _pollInterval = TimeSpan.FromMilliseconds(laneSettings.PollIntervalMilliseconds);
+
+    private readonly TimeSpan _maxPollInterval = TimeSpan.FromMilliseconds(laneSettings.MaxPollIntervalMilliseconds);
+
+    private TimeSpan _idleWait = TimeSpan.FromMilliseconds(laneSettings.PollIntervalMilliseconds);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -40,9 +49,9 @@ public sealed class MessageLaneProcessor(
                     continue;
                 }
 
-                IReadOnlyList<Guid> claimedIds = await ClaimAsync(_freeSlots.CurrentCount, stoppingToken);
+                ClaimOutcome claim = await ClaimAsync(_freeSlots.CurrentCount);
 
-                foreach (Guid claimedId in claimedIds)
+                foreach (Guid claimedId in claim.ClaimedIds)
                 {
                     await _freeSlots.WaitAsync(stoppingToken);
 
@@ -50,6 +59,19 @@ public sealed class MessageLaneProcessor(
 
                     messagesInFlight.Add(messageInFlight);
                 }
+
+                if (claim.ClaimedIds.Count > 0)
+                {
+                    _idleWait = _pollInterval;
+
+                    continue;
+                }
+
+                bool wokenUp = await laneWakeUps.WaitAsync(lane, claim.WaitBeforeNextClaim, stoppingToken);
+
+                TimeSpan doubledIdleWait = DoubledIdleWait();
+
+                _idleWait = wokenUp ? _pollInterval : doubledIdleWait;
             }
         }
         finally
@@ -65,18 +87,20 @@ public sealed class MessageLaneProcessor(
         _freeSlots.Dispose();
     }
 
-    private async Task<IReadOnlyList<Guid>> ClaimAsync(
-        int limit,
-        CancellationToken stoppingToken)
+    private TimeSpan DoubledIdleWait()
     {
-        IReadOnlyList<Guid> claimedIds;
-        TimeSpan waitWhenIdle;
+        TimeSpan doubledIdleWait = _idleWait * 2;
 
+        return doubledIdleWait < _maxPollInterval ? doubledIdleWait : _maxPollInterval;
+    }
+
+    private async Task<ClaimOutcome> ClaimAsync(int limit)
+    {
         try
         {
-            claimedIds = await ClaimFromStoreAsync(limit);
+            IReadOnlyList<Guid> claimedIds = await ClaimFromStoreAsync(limit);
 
-            waitWhenIdle = TimeSpan.FromMilliseconds(laneSettings.PollIntervalMilliseconds);
+            return new ClaimOutcome(claimedIds, _idleWait);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -88,17 +112,8 @@ public sealed class MessageLaneProcessor(
                 lane,
                 ClaimFailureBackoff);
 
-            claimedIds = [];
-
-            waitWhenIdle = ClaimFailureBackoff;
+            return new ClaimOutcome([], ClaimFailureBackoff);
         }
-
-        if (claimedIds.Count == 0)
-        {
-            await Task.Delay(waitWhenIdle, stoppingToken);
-        }
-
-        return claimedIds;
     }
 
     private async Task<IReadOnlyList<Guid>> ClaimFromStoreAsync(int limit)
@@ -113,7 +128,7 @@ public sealed class MessageLaneProcessor(
 
         DateTime claimedUntilUtc = nowUtc.AddSeconds(leaseSeconds);
 
-        // An idle lane polls several times a second; tracing every empty poll would export nothing useful.
+        // An idle lane keeps polling; tracing every empty claim would export nothing useful.
         using IDisposable quietClaim = SuppressInstrumentationScope.Begin();
 
         return await messageStore.ClaimAsync(lane, limit, nowUtc, claimedUntilUtc);
@@ -143,4 +158,8 @@ public sealed class MessageLaneProcessor(
             _freeSlots.Release();
         }
     }
+
+    private sealed record ClaimOutcome(
+        IReadOnlyList<Guid> ClaimedIds,
+        TimeSpan WaitBeforeNextClaim);
 }

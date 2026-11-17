@@ -6,8 +6,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Evently.Common.Infrastructure.Messaging;
 
-// Handles one claimed message in its own scope and records the outcome. Nothing is held open over the handlers:
-// the claim's lease is what keeps other processors away meanwhile.
+// Handles one claimed message in its own scope and records the outcome, with the handlers that succeeded, in one
+// statement. Nothing is held open over the handlers: the claim's lease is what keeps other processors away meanwhile.
 public sealed class MessageProcessor(
     MessageTable table,
     IMessageDispatcher dispatcher,
@@ -35,16 +35,21 @@ public sealed class MessageProcessor(
 
         Result outcome = await DispatchAsync(storedMessage, scope.ServiceProvider, cancellationToken);
 
+        HandledMessageConsumers handledMessageConsumers =
+            scope.ServiceProvider.GetRequiredService<HandledMessageConsumers>();
+
+        string[] handledConsumers = [.. handledMessageConsumers.Names];
+
         if (outcome.IsSuccess)
         {
             DateTime processedOnUtc = dateTimeProvider.UtcNow;
 
-            await messageStore.MarkProcessedAsync(messageId, processedOnUtc);
+            await messageStore.MarkProcessedAsync(messageId, processedOnUtc, handledConsumers);
 
             return;
         }
 
-        await RecordFailureAsync(messageStore, storedMessage, outcome.Error, laneSettings);
+        await RecordFailureAsync(messageStore, storedMessage, outcome.Error, laneSettings, handledConsumers);
     }
 
     private async Task<Result> DispatchAsync(
@@ -73,7 +78,8 @@ public sealed class MessageProcessor(
         MessageStore messageStore,
         StoredMessage storedMessage,
         Error failure,
-        MessageLaneSettings laneSettings)
+        MessageLaneSettings laneSettings,
+        string[] handledConsumers)
     {
         int retryCount = storedMessage.RetryCount + 1;
 
@@ -83,7 +89,12 @@ public sealed class MessageProcessor(
         {
             DateTime nextRetryOnUtc = NextRetryOnUtc(retryCount, laneSettings);
 
-            await messageStore.ScheduleRetryAsync(storedMessage.Id, retryCount, failure.Description, nextRetryOnUtc);
+            await messageStore.ScheduleRetryAsync(
+                storedMessage.Id,
+                retryCount,
+                failure.Description,
+                nextRetryOnUtc,
+                handledConsumers);
 
             logger.LogWarning(
                 "{Module} - {Table} message {MessageId} failed with {ErrorCode}; retry {RetryCount}/{MaxRetries} at {NextRetryOnUtc}",
@@ -100,7 +111,12 @@ public sealed class MessageProcessor(
 
         DateTime deadLetteredOnUtc = dateTimeProvider.UtcNow;
 
-        await messageStore.DeadLetterAsync(storedMessage.Id, retryCount, failure.Description, deadLetteredOnUtc);
+        await messageStore.DeadLetterAsync(
+            storedMessage.Id,
+            retryCount,
+            failure.Description,
+            deadLetteredOnUtc,
+            handledConsumers);
 
         logger.LogCritical(
             "{Module} - {Table} message {MessageId} failed with {ErrorCode} after {RetryCount} attempts; dead-lettered",

@@ -23,17 +23,19 @@ public static class MessagingConfiguration
         {
             var outboxTable = MessageTable.Outbox(outbox.ModuleName, outbox.Schema);
 
-            var outboxMessagesInterceptor = new InsertOutboxMessagesInterceptor(outbox.LaneOf);
+            var outboxWakeUps = new OutboxWakeUps(outbox.Lanes);
+
+            var outboxMessagesInterceptor = new InsertOutboxMessagesInterceptor(outbox.LaneOf, outboxWakeUps);
 
             var domainEventDispatcher = new DomainEventDispatcher(outbox.HandlersAssembly);
 
-            services.Configure<OutboxOptions>(outbox.ModuleName, outboxSection);
+            services.AddMessageBoxOptions<OutboxOptions>(outbox.ModuleName, outboxSection, outbox.Lanes);
 
             services.AddKeyedSingleton(outbox.ModuleName, outboxMessagesInterceptor);
 
             services.AddDomainEventHandlers(outbox.HandlersAssembly, outboxTable);
 
-            services.AddMessageProcessing<OutboxOptions>(outboxTable, domainEventDispatcher, outbox.Lanes);
+            services.AddMessageProcessing<OutboxOptions>(outboxTable, domainEventDispatcher, outboxWakeUps, outbox.Lanes);
 
             return services;
         }
@@ -44,15 +46,36 @@ public static class MessagingConfiguration
         {
             var inboxTable = MessageTable.Inbox(inbox.ModuleName, inbox.Schema);
 
+            var inboxWakeUps = new InboxWakeUps(inbox.Lanes);
+
             var integrationEventDispatcher = new IntegrationEventDispatcher(inbox.HandlersAssembly);
 
-            services.Configure<InboxOptions>(inbox.ModuleName, inboxSection);
+            services.AddMessageBoxOptions<InboxOptions>(inbox.ModuleName, inboxSection, inbox.Lanes);
+
+            // The module's inbox consumer resolves this under the module's name to wake a lane once it stores a message.
+            services.AddKeyedSingleton(inbox.ModuleName, inboxWakeUps);
 
             services.AddIntegrationEventHandlers(inbox.HandlersAssembly, inboxTable);
 
-            services.AddMessageProcessing<InboxOptions>(inboxTable, integrationEventDispatcher, inbox.Lanes);
+            services.AddMessageProcessing<InboxOptions>(inboxTable, integrationEventDispatcher, inboxWakeUps, inbox.Lanes);
 
             return services;
+        }
+
+        private void AddMessageBoxOptions<TOptions>(
+            string moduleName,
+            IConfiguration messageBoxSection,
+            IReadOnlyList<string> lanes)
+            where TOptions : MessageBoxOptions
+        {
+            services.AddOptions<TOptions>(moduleName)
+                .Bind(messageBoxSection)
+                .Validate(
+                    messageBoxOptions => messageBoxOptions.HasValidSettingsFor(lanes),
+                    $"{moduleName} needs settings for the {string.Join(", ", lanes)} lanes, each with a positive "
+                    + "Concurrency, PollIntervalMilliseconds and MaxRetries, a RetryDelaySeconds of zero or more, and "
+                    + "a MaxPollIntervalMilliseconds no shorter than PollIntervalMilliseconds.")
+                .ValidateOnStart();
         }
 
         private void AddDomainEventHandlers(
@@ -116,9 +139,12 @@ public static class MessagingConfiguration
         private void AddMessageProcessing<TOptions>(
             MessageTable table,
             IMessageDispatcher dispatcher,
+            LaneWakeUps laneWakeUps,
             IReadOnlyList<string> lanes)
             where TOptions : MessageBoxOptions
         {
+            services.TryAddScoped<HandledMessageConsumers>();
+
             foreach (string lane in lanes)
             {
                 services.AddSingleton<IHostedService>(serviceProvider =>
@@ -138,7 +164,8 @@ public static class MessagingConfiguration
                         lane,
                         laneSettings,
                         messageBoxOptions.LeaseSeconds,
-                        messageProcessor);
+                        messageProcessor,
+                        laneWakeUps);
                 });
             }
 

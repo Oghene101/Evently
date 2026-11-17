@@ -18,7 +18,7 @@ namespace Evently.Modules.Attendance.Infrastructure.Database.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("attendance")
-                .HasAnnotation("ProductVersion", "10.0.4")
+                .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -70,6 +70,12 @@ namespace Evently.Modules.Attendance.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTime>("AvailableOnUtc")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("available_on_utc")
+                        .HasComputedColumnSql("COALESCE(next_retry_on_utc, occurred_on_utc)", true);
+
                     b.Property<DateTime?>("ClaimedUntilUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("claimed_until_utc");
@@ -116,11 +122,20 @@ namespace Evently.Modules.Attendance.Infrastructure.Database.Migrations
                     b.HasKey("Id")
                         .HasName("pk_inbox_messages");
 
-                    b.HasIndex("Lane", "OccurredOnUtc")
+                    b.HasIndex("ProcessedOnUtc")
+                        .HasDatabaseName("ix_inbox_messages_processed")
+                        .HasFilter("processed_on_utc IS NOT NULL");
+
+                    b.HasIndex("Lane", "AvailableOnUtc")
                         .HasDatabaseName("ix_inbox_messages_unprocessed")
                         .HasFilter("processed_on_utc IS NULL");
 
                     b.ToTable("inbox_messages", "attendance");
+
+                    b
+                        .HasAnnotation("Npgsql:StorageParameter:autovacuum_analyze_scale_factor", 0.02)
+                        .HasAnnotation("Npgsql:StorageParameter:autovacuum_vacuum_scale_factor", 0.02)
+                        .HasAnnotation("Npgsql:StorageParameter:fillfactor", 80);
                 });
 
             modelBuilder.Entity("Evently.Common.Infrastructure.Inbox.InboxMessageConsumer", b =>
@@ -187,6 +202,12 @@ namespace Evently.Modules.Attendance.Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTime>("AvailableOnUtc")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("available_on_utc")
+                        .HasComputedColumnSql("COALESCE(next_retry_on_utc, occurred_on_utc)", true);
+
                     b.Property<DateTime?>("ClaimedUntilUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("claimed_until_utc");
@@ -233,11 +254,20 @@ namespace Evently.Modules.Attendance.Infrastructure.Database.Migrations
                     b.HasKey("Id")
                         .HasName("pk_outbox_messages");
 
-                    b.HasIndex("Lane", "OccurredOnUtc")
+                    b.HasIndex("ProcessedOnUtc")
+                        .HasDatabaseName("ix_outbox_messages_processed")
+                        .HasFilter("processed_on_utc IS NOT NULL");
+
+                    b.HasIndex("Lane", "AvailableOnUtc")
                         .HasDatabaseName("ix_outbox_messages_unprocessed")
                         .HasFilter("processed_on_utc IS NULL");
 
                     b.ToTable("outbox_messages", "attendance");
+
+                    b
+                        .HasAnnotation("Npgsql:StorageParameter:autovacuum_analyze_scale_factor", 0.02)
+                        .HasAnnotation("Npgsql:StorageParameter:autovacuum_vacuum_scale_factor", 0.02)
+                        .HasAnnotation("Npgsql:StorageParameter:fillfactor", 80);
                 });
 
             modelBuilder.Entity("Evently.Common.Infrastructure.Outbox.OutboxMessageConsumer", b =>

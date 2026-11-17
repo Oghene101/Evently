@@ -26,6 +26,7 @@ public sealed class OutboxMessageProcessorTests(
     {
         Concurrency = 1,
         PollIntervalMilliseconds = 100,
+        MaxPollIntervalMilliseconds = 100,
         MaxRetries = 3,
         RetryDelaySeconds = 30
     };
@@ -182,6 +183,50 @@ public sealed class OutboxMessageProcessorTests(
     }
 
     [Fact]
+    public async Task HandlersThatSucceeded_AreSavedWithTheRetry_SoTheRetrySkipsThem()
+    {
+        var reserveTickets = new HandlerScript();
+
+        var notifyReservation = new HandlerScript { Outcome = BrokerDownOutcome };
+
+        MessageProcessor firstAttemptProcessor = BuildIdempotentProcessor(reserveTickets, notifyReservation);
+
+        Guid messageId = await WriteReservationAsync();
+
+        await firstAttemptProcessor.ProcessAsync(messageId, Lane, CancellationToken.None);
+
+        bool reserveTicketsSavedWithRetry = await ConsumerSavedAsync(messageId, nameof(ReserveTicketsDomainEventHandler));
+
+        bool notifyReservationSavedWithRetry =
+            await ConsumerSavedAsync(messageId, nameof(NotifyReservationDomainEventHandler));
+
+        var reserveTicketsOnRetry = new HandlerScript();
+
+        var notifyReservationOnRetry = new HandlerScript();
+
+        MessageProcessor retryProcessor = BuildIdempotentProcessor(reserveTicketsOnRetry, notifyReservationOnRetry);
+
+        await retryProcessor.ProcessAsync(messageId, Lane, CancellationToken.None);
+
+        bool notifyReservationSavedWhenProcessed =
+            await ConsumerSavedAsync(messageId, nameof(NotifyReservationDomainEventHandler));
+
+        StoredMessageRow? storedOutboxMessage = await database.StoredMessageAsync(OutboxTable, messageId);
+
+        reserveTicketsSavedWithRetry.Should().BeTrue();
+
+        notifyReservationSavedWithRetry.Should().BeFalse();
+
+        reserveTicketsOnRetry.HandledEventIds.Should().BeEmpty();
+
+        notifyReservationOnRetry.HandledEventIds.Should().Equal(messageId);
+
+        notifyReservationSavedWhenProcessed.Should().BeTrue();
+
+        storedOutboxMessage!.ProcessedOnUtc.Should().NotBeNull();
+    }
+
+    [Fact]
     public async Task ProcessedMessage_IsLeftAlone()
     {
         var reserveTickets = new HandlerScript();
@@ -218,6 +263,42 @@ public sealed class OutboxMessageProcessorTests(
         return reservation.Id;
     }
 
+    private Task<bool> ConsumerSavedAsync(
+        Guid messageId,
+        string consumerName) => database.ConsumerExistsAsync(OutboxTable, messageId, consumerName);
+
+    private MessageProcessor BuildIdempotentProcessor(
+        HandlerScript reserveTickets,
+        HandlerScript notifyReservation)
+    {
+        var reserveTicketsHandler = new ReserveTicketsDomainEventHandler(reserveTickets);
+
+        var notifyReservationHandler = new NotifyReservationDomainEventHandler(notifyReservation);
+
+        var services = new ServiceCollection();
+
+        services.AddScoped(_ => database.ConnectionFactory);
+        services.AddScoped<HandledMessageConsumers>();
+
+        // Registered under the handler's own type, as MessagingConfiguration decorates it.
+        services.AddScoped(
+            typeof(ReserveTicketsDomainEventHandler),
+            scopedServices => new IdempotentDomainEventHandler<TicketsReservedDomainEvent>(
+                reserveTicketsHandler,
+                database.ConnectionFactory,
+                OutboxTable,
+                scopedServices.GetRequiredService<HandledMessageConsumers>()));
+        services.AddScoped(
+            typeof(NotifyReservationDomainEventHandler),
+            scopedServices => new IdempotentDomainEventHandler<TicketsReservedDomainEvent>(
+                notifyReservationHandler,
+                database.ConnectionFactory,
+                OutboxTable,
+                scopedServices.GetRequiredService<HandledMessageConsumers>()));
+
+        return BuildProcessor(services);
+    }
+
     private MessageProcessor BuildProcessor(
         HandlerScript reserveTickets,
         HandlerScript? notifyReservation = null)
@@ -231,7 +312,13 @@ public sealed class OutboxMessageProcessorTests(
         services.AddSingleton(reserveTicketsHandler);
         services.AddSingleton(notifyReservationHandler);
         services.AddScoped(_ => database.ConnectionFactory);
+        services.AddScoped<HandledMessageConsumers>();
 
+        return BuildProcessor(services);
+    }
+
+    private MessageProcessor BuildProcessor(ServiceCollection services)
+    {
         ServiceProvider serviceProvider = services.BuildServiceProvider();
 
         _serviceProviders.Add(serviceProvider);

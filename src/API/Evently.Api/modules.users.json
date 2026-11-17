@@ -8,6 +8,7 @@
         "Default": {
           "Concurrency": 4,
           "PollIntervalMilliseconds": 500,
+          "MaxPollIntervalMilliseconds": 5000,
           "MaxRetries": 5,
           "RetryDelaySeconds": 10
         }
@@ -21,6 +22,7 @@
         "Default": {
           "Concurrency": 1,
           "PollIntervalMilliseconds": 500,
+          "MaxPollIntervalMilliseconds": 5000,
           "MaxRetries": 5,
           "RetryDelaySeconds": 10
         }

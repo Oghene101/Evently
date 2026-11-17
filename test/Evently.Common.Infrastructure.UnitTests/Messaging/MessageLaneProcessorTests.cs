@@ -1,3 +1,4 @@
+using Evently.Common.Application.Data;
 using Evently.Common.Infrastructure.Messaging;
 using Evently.Common.Infrastructure.Outbox;
 using Evently.Common.Infrastructure.UnitTests.Abstractions;
@@ -17,6 +18,7 @@ public sealed class MessageLaneProcessorTests(
     {
         Concurrency = 8,
         PollIntervalMilliseconds = 50,
+        MaxPollIntervalMilliseconds = 50,
         MaxRetries = 3,
         RetryDelaySeconds = 1
     };
@@ -25,7 +27,11 @@ public sealed class MessageLaneProcessorTests(
 
     private static readonly TimeSpan ProcessingTimeout = TimeSpan.FromSeconds(60);
 
-    private static readonly TimeSpan ProcessedPollInterval = TimeSpan.FromMilliseconds(100);
+    private static readonly TimeSpan ProcessedPollInterval = TimeSpan.FromMilliseconds(20);
+
+    private static readonly TimeSpan IdleObservationTime = TimeSpan.FromSeconds(2);
+
+    private static readonly TimeSpan WokenLaneTimeout = TimeSpan.FromMilliseconds(500);
 
     private readonly string _lane = Guid.NewGuid().ToString();
 
@@ -42,12 +48,15 @@ public sealed class MessageLaneProcessorTests(
 
         services.AddSingleton(countSeatsHandler);
         services.AddScoped(_ => database.ConnectionFactory);
+        services.AddScoped<HandledMessageConsumers>();
 
         await using ServiceProvider serviceProvider = services.BuildServiceProvider();
 
-        using MessageLaneProcessor firstProcessor = BuildLaneProcessor(serviceProvider);
+        var outboxWakeUps = new OutboxWakeUps([_lane]);
 
-        using MessageLaneProcessor secondProcessor = BuildLaneProcessor(serviceProvider);
+        using MessageLaneProcessor firstProcessor = BuildLaneProcessor(serviceProvider, Lane, outboxWakeUps);
+
+        using MessageLaneProcessor secondProcessor = BuildLaneProcessor(serviceProvider, Lane, outboxWakeUps);
 
         await firstProcessor.StartAsync(CancellationToken.None);
 
@@ -65,11 +74,89 @@ public sealed class MessageLaneProcessorTests(
         countSeats.HandledEventIds.Should().BeEquivalentTo(messageIds);
     }
 
-    private async Task<List<Guid>> WriteSeatsCountedAsync()
+    [Fact]
+    public async Task IdleLane_DoublesItsWaitBetweenEmptyClaims()
+    {
+        var idleLane = new MessageLaneSettings
+        {
+            Concurrency = 1,
+            PollIntervalMilliseconds = 50,
+            MaxPollIntervalMilliseconds = 400,
+            MaxRetries = 3,
+            RetryDelaySeconds = 1
+        };
+
+        var claimConnections = new CountingDbConnectionFactory(database.ConnectionFactory);
+
+        var services = new ServiceCollection();
+
+        services.AddScoped<IDbConnectionFactory>(_ => claimConnections);
+        services.AddScoped<HandledMessageConsumers>();
+
+        await using ServiceProvider serviceProvider = services.BuildServiceProvider();
+
+        var outboxWakeUps = new OutboxWakeUps([_lane]);
+
+        using MessageLaneProcessor processor = BuildLaneProcessor(serviceProvider, idleLane, outboxWakeUps);
+
+        await processor.StartAsync(CancellationToken.None);
+
+        await Task.Delay(IdleObservationTime);
+
+        await processor.StopAsync(CancellationToken.None);
+
+        // Polling every 50 ms would claim about 40 times in 2 s; doubling up to 400 ms claims about 8 times.
+        claimConnections.OpenedConnections.Should().BeInRange(1, 12);
+    }
+
+    [Fact]
+    public async Task WakeUp_EndsAnIdleWait_SoANewMessageIsHandledAtOnce()
+    {
+        var idleLane = new MessageLaneSettings
+        {
+            Concurrency = 1,
+            PollIntervalMilliseconds = 50,
+            MaxPollIntervalMilliseconds = 30_000,
+            MaxRetries = 3,
+            RetryDelaySeconds = 1
+        };
+
+        var countSeats = new HandlerScript();
+
+        var countSeatsHandler = new CountSeatsDomainEventHandler(countSeats);
+
+        var services = new ServiceCollection();
+
+        services.AddSingleton(countSeatsHandler);
+        services.AddScoped(_ => database.ConnectionFactory);
+        services.AddScoped<HandledMessageConsumers>();
+
+        await using ServiceProvider serviceProvider = services.BuildServiceProvider();
+
+        var outboxWakeUps = new OutboxWakeUps([_lane]);
+
+        using MessageLaneProcessor processor = BuildLaneProcessor(serviceProvider, idleLane, outboxWakeUps);
+
+        await processor.StartAsync(CancellationToken.None);
+
+        await Task.Delay(IdleObservationTime);
+
+        List<Guid> messageIds = await WriteSeatsCountedAsync(1);
+
+        outboxWakeUps.WakeUp(_lane);
+
+        bool processedPromptly = await WaitUntilProcessedAsync(messageIds, WokenLaneTimeout);
+
+        await processor.StopAsync(CancellationToken.None);
+
+        processedPromptly.Should().BeTrue();
+    }
+
+    private async Task<List<Guid>> WriteSeatsCountedAsync(int messageCount = MessageCount)
     {
         List<Guid> messageIds = [];
 
-        foreach (int seats in Enumerable.Range(0, MessageCount))
+        foreach (int seats in Enumerable.Range(0, messageCount))
         {
             var seatsCounted = new SeatsCountedDomainEvent(seats);
 
@@ -83,7 +170,10 @@ public sealed class MessageLaneProcessorTests(
         return messageIds;
     }
 
-    private MessageLaneProcessor BuildLaneProcessor(ServiceProvider serviceProvider)
+    private MessageLaneProcessor BuildLaneProcessor(
+        ServiceProvider serviceProvider,
+        MessageLaneSettings laneSettings,
+        LaneWakeUps laneWakeUps)
     {
         var clock = new SystemDateTimeProvider();
 
@@ -101,9 +191,10 @@ public sealed class MessageLaneProcessorTests(
         return new MessageLaneProcessor(
             database.OutboxTable,
             _lane,
-            Lane,
+            laneSettings,
             120,
             messageProcessor,
+            laneWakeUps,
             serviceScopeFactory,
             clock,
             NullLogger<MessageLaneProcessor>.Instance);

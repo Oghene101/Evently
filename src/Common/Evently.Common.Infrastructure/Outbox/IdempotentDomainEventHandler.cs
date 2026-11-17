@@ -7,20 +7,20 @@ using Evently.Common.Infrastructure.Messaging;
 
 namespace Evently.Common.Infrastructure.Outbox;
 
+// The handled-record is saved by MessageProcessor together with the message's outcome, sparing a round trip per handler.
 public sealed class IdempotentDomainEventHandler<TDomainEvent>(
     IDomainEventHandler<TDomainEvent> decorated,
     IDbConnectionFactory dbConnectionFactory,
-    MessageTable outboxTable)
+    MessageTable outboxTable,
+    HandledMessageConsumers handledMessageConsumers)
     : DomainEventHandler<TDomainEvent>
     where TDomainEvent : IDomainEvent
 {
     public override async Task<Result> Handle(TDomainEvent domainEvent, CancellationToken cancellationToken = default)
     {
-        await using DbConnection connection = await dbConnectionFactory.OpenConnectionAsync();
-
         var outboxMessageConsumer = new OutboxMessageConsumer(domainEvent.Id, decorated.GetType().Name);
 
-        bool alreadyHandled = await OutboxConsumerExistsAsync(connection, outboxMessageConsumer);
+        bool alreadyHandled = await OutboxConsumerExistsAsync(outboxMessageConsumer);
 
         if (alreadyHandled)
         {
@@ -34,14 +34,12 @@ public sealed class IdempotentDomainEventHandler<TDomainEvent>(
             return handled;
         }
 
-        await InsertOutboxConsumerAsync(connection, outboxMessageConsumer);
+        handledMessageConsumers.Add(outboxMessageConsumer.Name);
 
         return handled;
     }
 
-    private async Task<bool> OutboxConsumerExistsAsync(
-        DbConnection dbConnection,
-        OutboxMessageConsumer outboxMessageConsumer)
+    private async Task<bool> OutboxConsumerExistsAsync(OutboxMessageConsumer outboxMessageConsumer)
     {
         string sql =
             $"""
@@ -53,19 +51,8 @@ public sealed class IdempotentDomainEventHandler<TDomainEvent>(
              )
              """;
 
-        return await dbConnection.ExecuteScalarAsync<bool>(sql, outboxMessageConsumer);
-    }
+        await using DbConnection connection = await dbConnectionFactory.OpenConnectionAsync();
 
-    private async Task InsertOutboxConsumerAsync(
-        DbConnection dbConnection,
-        OutboxMessageConsumer outboxMessageConsumer)
-    {
-        string sql =
-            $"""
-             INSERT INTO {outboxTable.QualifiedConsumersTable}(outbox_message_id, name)
-             VALUES (@OutboxMessageId, @Name)
-             """;
-
-        await dbConnection.ExecuteAsync(sql, outboxMessageConsumer);
+        return await connection.ExecuteScalarAsync<bool>(sql, outboxMessageConsumer);
     }
 }

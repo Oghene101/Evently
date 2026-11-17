@@ -1,5 +1,6 @@
 using Evently.Common.Domain;
 using Evently.Common.Infrastructure.Inbox;
+using Evently.Common.Infrastructure.Messaging;
 using Evently.Common.Infrastructure.Outbox;
 using Evently.Common.Infrastructure.UnitTests.Abstractions;
 using FluentAssertions;
@@ -14,36 +15,54 @@ public sealed class IdempotentHandlerTests(
 
     private static readonly Result BrokerDownOutcome = Result.Failure(BrokerDown);
 
+    private readonly HandledMessageConsumers _handledMessageConsumers = new();
+
     [Fact]
-    public async Task HandledDomainEvent_IsRecorded_AndNotHandledAgain()
+    public async Task HandledDomainEvent_IsLeftForTheProcessorToSave()
     {
         var reserveTickets = new HandlerScript();
 
-        var reserveTicketsHandler = new ReserveTicketsDomainEventHandler(reserveTickets);
-
-        var idempotentHandler = new IdempotentDomainEventHandler<TicketsReservedDomainEvent>(
-            reserveTicketsHandler,
-            database.ConnectionFactory,
-            database.OutboxTable);
+        IdempotentDomainEventHandler<TicketsReservedDomainEvent> idempotentHandler =
+            IdempotentReserveTicketsHandler(reserveTickets);
 
         var reservation = new TicketsReservedDomainEvent(Guid.NewGuid());
 
-        Result firstAttempt = await idempotentHandler.Handle(reservation);
+        Result handled = await idempotentHandler.Handle(reservation);
 
-        Result secondAttempt = await idempotentHandler.Handle(reservation);
-
-        bool consumerRecorded = await database.ConsumerExistsAsync(
+        bool consumerSaved = await database.ConsumerExistsAsync(
             database.OutboxTable,
             reservation.Id,
             nameof(ReserveTicketsDomainEventHandler));
 
-        firstAttempt.IsSuccess.Should().BeTrue();
+        handled.IsSuccess.Should().BeTrue();
 
-        secondAttempt.IsSuccess.Should().BeTrue();
+        _handledMessageConsumers.Names.Should().Equal(nameof(ReserveTicketsDomainEventHandler));
 
-        consumerRecorded.Should().BeTrue();
+        consumerSaved.Should().BeFalse();
+    }
 
-        reserveTickets.HandledEventIds.Should().Equal(reservation.Id);
+    [Fact]
+    public async Task SavedDomainEventConsumer_IsNotHandledAgain()
+    {
+        var reserveTickets = new HandlerScript();
+
+        IdempotentDomainEventHandler<TicketsReservedDomainEvent> idempotentHandler =
+            IdempotentReserveTicketsHandler(reserveTickets);
+
+        var reservation = new TicketsReservedDomainEvent(Guid.NewGuid());
+
+        await database.InsertConsumerAsync(
+            database.OutboxTable,
+            reservation.Id,
+            nameof(ReserveTicketsDomainEventHandler));
+
+        Result redelivered = await idempotentHandler.Handle(reservation);
+
+        redelivered.IsSuccess.Should().BeTrue();
+
+        reserveTickets.HandledEventIds.Should().BeEmpty();
+
+        _handledMessageConsumers.Names.Should().BeEmpty();
     }
 
     [Fact]
@@ -51,12 +70,8 @@ public sealed class IdempotentHandlerTests(
     {
         var reserveTickets = new HandlerScript { Outcome = BrokerDownOutcome };
 
-        var reserveTicketsHandler = new ReserveTicketsDomainEventHandler(reserveTickets);
-
-        var idempotentHandler = new IdempotentDomainEventHandler<TicketsReservedDomainEvent>(
-            reserveTicketsHandler,
-            database.ConnectionFactory,
-            database.OutboxTable);
+        IdempotentDomainEventHandler<TicketsReservedDomainEvent> idempotentHandler =
+            IdempotentReserveTicketsHandler(reserveTickets);
 
         var reservation = new TicketsReservedDomainEvent(Guid.NewGuid());
 
@@ -64,46 +79,59 @@ public sealed class IdempotentHandlerTests(
 
         await idempotentHandler.Handle(reservation);
 
-        bool consumerRecorded = await database.ConsumerExistsAsync(
-            database.OutboxTable,
-            reservation.Id,
-            nameof(ReserveTicketsDomainEventHandler));
-
         firstAttempt.Error.Should().Be(BrokerDown);
 
-        consumerRecorded.Should().BeFalse();
+        _handledMessageConsumers.Names.Should().BeEmpty();
 
         reserveTickets.HandledEventIds.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task HandledIntegrationEvent_IsRecorded_AndNotHandledAgain()
+    public async Task HandledIntegrationEvent_IsLeftForTheProcessorToSave()
     {
         var registerAttendee = new HandlerScript();
 
-        var registerAttendeeHandler = new RegisterAttendeeIntegrationEventHandler(registerAttendee);
-
-        var idempotentHandler = new IdempotentIntegrationEventHandler<AttendeeRegisteredIntegrationEvent>(
-            registerAttendeeHandler,
-            database.ConnectionFactory,
-            database.InboxTable);
+        IdempotentIntegrationEventHandler<AttendeeRegisteredIntegrationEvent> idempotentHandler =
+            IdempotentRegisterAttendeeHandler(registerAttendee);
 
         var attendeeRegistered = new AttendeeRegisteredIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid());
 
-        await idempotentHandler.Handle(attendeeRegistered);
+        Result handled = await idempotentHandler.Handle(attendeeRegistered);
 
-        Result secondAttempt = await idempotentHandler.Handle(attendeeRegistered);
-
-        bool consumerRecorded = await database.ConsumerExistsAsync(
+        bool consumerSaved = await database.ConsumerExistsAsync(
             database.InboxTable,
             attendeeRegistered.Id,
             nameof(RegisterAttendeeIntegrationEventHandler));
 
-        secondAttempt.IsSuccess.Should().BeTrue();
+        handled.IsSuccess.Should().BeTrue();
 
-        consumerRecorded.Should().BeTrue();
+        _handledMessageConsumers.Names.Should().Equal(nameof(RegisterAttendeeIntegrationEventHandler));
 
-        registerAttendee.HandledEventIds.Should().Equal(attendeeRegistered.Id);
+        consumerSaved.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SavedIntegrationEventConsumer_IsNotHandledAgain()
+    {
+        var registerAttendee = new HandlerScript();
+
+        IdempotentIntegrationEventHandler<AttendeeRegisteredIntegrationEvent> idempotentHandler =
+            IdempotentRegisterAttendeeHandler(registerAttendee);
+
+        var attendeeRegistered = new AttendeeRegisteredIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid());
+
+        await database.InsertConsumerAsync(
+            database.InboxTable,
+            attendeeRegistered.Id,
+            nameof(RegisterAttendeeIntegrationEventHandler));
+
+        Result redelivered = await idempotentHandler.Handle(attendeeRegistered);
+
+        redelivered.IsSuccess.Should().BeTrue();
+
+        registerAttendee.HandledEventIds.Should().BeEmpty();
+
+        _handledMessageConsumers.Names.Should().BeEmpty();
     }
 
     [Fact]
@@ -111,12 +139,8 @@ public sealed class IdempotentHandlerTests(
     {
         var registerAttendee = new HandlerScript { Outcome = BrokerDownOutcome };
 
-        var registerAttendeeHandler = new RegisterAttendeeIntegrationEventHandler(registerAttendee);
-
-        var idempotentHandler = new IdempotentIntegrationEventHandler<AttendeeRegisteredIntegrationEvent>(
-            registerAttendeeHandler,
-            database.ConnectionFactory,
-            database.InboxTable);
+        IdempotentIntegrationEventHandler<AttendeeRegisteredIntegrationEvent> idempotentHandler =
+            IdempotentRegisterAttendeeHandler(registerAttendee);
 
         var attendeeRegistered = new AttendeeRegisteredIntegrationEvent(Guid.NewGuid(), DateTime.UtcNow, Guid.NewGuid());
 
@@ -124,13 +148,32 @@ public sealed class IdempotentHandlerTests(
 
         await idempotentHandler.Handle(attendeeRegistered);
 
-        bool consumerRecorded = await database.ConsumerExistsAsync(
-            database.InboxTable,
-            attendeeRegistered.Id,
-            nameof(RegisterAttendeeIntegrationEventHandler));
-
-        consumerRecorded.Should().BeFalse();
+        _handledMessageConsumers.Names.Should().BeEmpty();
 
         registerAttendee.HandledEventIds.Should().HaveCount(2);
+    }
+
+    private IdempotentDomainEventHandler<TicketsReservedDomainEvent> IdempotentReserveTicketsHandler(
+        HandlerScript reserveTickets)
+    {
+        var reserveTicketsHandler = new ReserveTicketsDomainEventHandler(reserveTickets);
+
+        return new IdempotentDomainEventHandler<TicketsReservedDomainEvent>(
+            reserveTicketsHandler,
+            database.ConnectionFactory,
+            database.OutboxTable,
+            _handledMessageConsumers);
+    }
+
+    private IdempotentIntegrationEventHandler<AttendeeRegisteredIntegrationEvent> IdempotentRegisterAttendeeHandler(
+        HandlerScript registerAttendee)
+    {
+        var registerAttendeeHandler = new RegisterAttendeeIntegrationEventHandler(registerAttendee);
+
+        return new IdempotentIntegrationEventHandler<AttendeeRegisteredIntegrationEvent>(
+            registerAttendeeHandler,
+            database.ConnectionFactory,
+            database.InboxTable,
+            _handledMessageConsumers);
     }
 }

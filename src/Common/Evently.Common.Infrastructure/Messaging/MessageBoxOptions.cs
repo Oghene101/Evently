@@ -16,4 +16,7 @@ public abstract class MessageBoxOptions
 
         return laneSettings ?? throw new InvalidOperationException($"No settings are configured for the '{lane}' lane");
     }
+
+    public bool HasValidSettingsFor(IReadOnlyList<string> lanes) =>
+        lanes.All(lane => Lanes.GetValueOrDefault(lane) is { } laneSettings && laneSettings.IsValid());
 }

@@ -1,6 +1,8 @@
 ﻿namespace Evently.Common.Infrastructure.Inbox;
 
-public sealed class InboxMessageConsumer(Guid inboxMessageId, string name)
+public sealed class InboxMessageConsumer(
+    Guid inboxMessageId,
+    string name)
 {
     public Guid InboxMessageId { get; init; } = inboxMessageId;
 

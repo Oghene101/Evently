@@ -15,6 +15,8 @@ public sealed class PurgeProcessedMessagesJob(
 
     public const string RetentionDaysKey = nameof(MessageBoxOptions.RetentionDays);
 
+    public const int PurgeBatchSize = 5_000;
+
     public async Task Execute(IJobExecutionContext context)
     {
         var table = (MessageTable)context.MergedJobDataMap[MessageTableKey];
@@ -25,14 +27,28 @@ public sealed class PurgeProcessedMessagesJob(
 
         var messageStore = new MessageStore(table, dbConnectionFactory);
 
-        PurgedMessages purgedMessages = await messageStore.PurgeProcessedAsync(processedBeforeUtc);
+        long purgedMessages = 0;
+
+        long purgedConsumers = 0;
+
+        PurgedMessages purgedBatch;
+
+        do
+        {
+            purgedBatch = await messageStore.PurgeProcessedBatchAsync(processedBeforeUtc, PurgeBatchSize);
+
+            purgedMessages += purgedBatch.Messages;
+
+            purgedConsumers += purgedBatch.Consumers;
+        }
+        while (purgedBatch.Messages == PurgeBatchSize);
 
         logger.LogInformation(
             "{Module} - Purged {PurgedMessages} {Table} messages processed before {ProcessedBeforeUtc} and {PurgedConsumers} consumer records",
             table.ModuleName,
-            purgedMessages.Messages,
+            purgedMessages,
             table.MessagesTable,
             processedBeforeUtc,
-            purgedMessages.Consumers);
+            purgedConsumers);
     }
 }

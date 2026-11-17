@@ -32,7 +32,7 @@ namespace Evently.Modules.Ticketing.Infrastructure;
 
 public static class TicketingModule
 {
-    private const string ModuleName = "Ticketing";
+    internal const string ModuleName = "Ticketing";
 
     extension(IServiceCollection services)
     {

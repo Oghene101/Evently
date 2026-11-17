@@ -23,7 +23,7 @@ namespace Evently.Modules.Events.Infrastructure;
 
 public static class EventsModule
 {
-    private const string ModuleName = "Events";
+    internal const string ModuleName = "Events";
 
     extension(IServiceCollection services)
     {

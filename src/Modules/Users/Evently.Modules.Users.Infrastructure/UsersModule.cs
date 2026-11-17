@@ -22,7 +22,7 @@ namespace Evently.Modules.Users.Infrastructure;
 
 public static class UsersModule
 {
-    private const string ModuleName = "Users";
+    internal const string ModuleName = "Users";
 
     extension(IServiceCollection services)
     {

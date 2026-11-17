@@ -17,7 +17,7 @@ public sealed class MessageStoreTests(
     private MessageTable OutboxTable => database.OutboxTable;
 
     [Fact]
-    public async Task Claim_TakesOnlyClaimableMessagesOfItsLane_OldestFirst()
+    public async Task Claim_TakesOnlyClaimableMessagesOfItsLane_LongestAvailableFirst()
     {
         var oldest = Guid.NewGuid();
         var leaseLapsed = Guid.NewGuid();
@@ -38,10 +38,10 @@ public sealed class MessageStoreTests(
         await database.InsertAsync(OutboxTable, oldest, "{}", _lane, occurredOnUtc: nineMinutesAgoUtc);
         await database.InsertAsync(OutboxTable, leaseLapsed, "{}", _lane, occurredOnUtc: fiveMinutesAgoUtc, claimedUntilUtc: oneSecondAgoUtc);
         await database.InsertAsync(OutboxTable, dueForRetry, "{}", _lane, occurredOnUtc: fourMinutesAgoUtc, nextRetryOnUtc: oneSecondAgoUtc);
-        await database.InsertAsync(OutboxTable, Guid.NewGuid(), "{}", _lane, claimedUntilUtc: inOneMinuteUtc);
-        await database.InsertAsync(OutboxTable, Guid.NewGuid(), "{}", _lane, nextRetryOnUtc: inOneMinuteUtc);
-        await database.InsertAsync(OutboxTable, Guid.NewGuid(), "{}", _lane, processedOnUtc: _nowUtc);
-        await database.InsertAsync(OutboxTable, Guid.NewGuid(), "{}", otherLane);
+        await database.InsertAsync(OutboxTable, Guid.NewGuid(), "{}", _lane, occurredOnUtc: oneMinuteAgoUtc, claimedUntilUtc: inOneMinuteUtc);
+        await database.InsertAsync(OutboxTable, Guid.NewGuid(), "{}", _lane, occurredOnUtc: oneMinuteAgoUtc, nextRetryOnUtc: inOneMinuteUtc);
+        await database.InsertAsync(OutboxTable, Guid.NewGuid(), "{}", _lane, occurredOnUtc: oneMinuteAgoUtc, processedOnUtc: _nowUtc);
+        await database.InsertAsync(OutboxTable, Guid.NewGuid(), "{}", otherLane, occurredOnUtc: oneMinuteAgoUtc);
 
         var outboxStore = new MessageStore(OutboxTable, database.ConnectionFactory);
 
@@ -49,7 +49,8 @@ public sealed class MessageStoreTests(
 
         StoredMessageRow? claimedOutboxMessage = await database.StoredMessageAsync(OutboxTable, oldest);
 
-        claimedIds.Should().Equal(oldest, leaseLapsed, dueForRetry, newest);
+        // A retried message is available from its retry time, not from when it occurred.
+        claimedIds.Should().Equal(oldest, leaseLapsed, newest, dueForRetry);
 
         claimedOutboxMessage!.ClaimedUntilUtc.Should().BeCloseTo(claimedUntilUtc, TimestampPrecision);
     }
@@ -59,7 +60,7 @@ public sealed class MessageStoreTests(
     {
         foreach (int _ in Enumerable.Range(0, 3))
         {
-            await database.InsertAsync(OutboxTable, Guid.NewGuid(), "{}", _lane);
+            await database.InsertAsync(OutboxTable, Guid.NewGuid(), "{}", _lane, occurredOnUtc: _nowUtc);
         }
 
         DateTime claimedUntilUtc = _nowUtc.AddMinutes(2);

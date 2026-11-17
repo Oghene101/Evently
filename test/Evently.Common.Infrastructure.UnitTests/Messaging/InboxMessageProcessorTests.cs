@@ -26,6 +26,7 @@ public sealed class InboxMessageProcessorTests(
     {
         Concurrency = 1,
         PollIntervalMilliseconds = 100,
+        MaxPollIntervalMilliseconds = 100,
         MaxRetries = 3,
         RetryDelaySeconds = 10
     };
@@ -178,6 +179,7 @@ public sealed class InboxMessageProcessorTests(
 
         services.AddSingleton(registerAttendeeHandler);
         services.AddScoped(_ => database.ConnectionFactory);
+        services.AddScoped<HandledMessageConsumers>();
 
         ServiceProvider serviceProvider = services.BuildServiceProvider();
 

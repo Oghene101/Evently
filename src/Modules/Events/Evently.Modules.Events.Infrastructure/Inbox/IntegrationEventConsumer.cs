@@ -5,12 +5,14 @@ using Evently.Common.Application.EventBus;
 using Evently.Common.Infrastructure.Inbox;
 using Evently.Common.Infrastructure.Serialization;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 
 namespace Evently.Modules.Events.Infrastructure.Inbox;
 
 internal sealed class IntegrationEventConsumer<TIntegrationEvent>(
-    IDbConnectionFactory dbConnectionFactory)
+    IDbConnectionFactory dbConnectionFactory,
+    [FromKeyedServices(EventsModule.ModuleName)] InboxWakeUps inboxWakeUps)
     : IConsumer<TIntegrationEvent>
     where TIntegrationEvent : IntegrationEvent
 {
@@ -36,5 +38,7 @@ internal sealed class IntegrationEventConsumer<TIntegrationEvent>(
             """;
 
         await connection.ExecuteAsync(sql, inboxMessage);
+
+        inboxWakeUps.WakeUp(inboxMessage.Lane);
     }
 }

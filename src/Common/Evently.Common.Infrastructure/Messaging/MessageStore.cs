@@ -11,6 +11,15 @@ public sealed class MessageStore(
     // Content a processed message keeps: the event's details are not needed once it has been handled.
     private const string ClearedContent = "{}";
 
+    // Saved in the same statement as the message's outcome, so a retry skips the handlers that already succeeded.
+    private string SaveHandledConsumersSql =>
+        $"""
+         WITH handled_consumers AS (
+             INSERT INTO {table.QualifiedConsumersTable}({table.ConsumerMessageIdColumn}, name)
+             SELECT @MessageId, unnest(@HandledConsumers::text[])
+             ON CONFLICT DO NOTHING)
+         """;
+
     public async Task<IReadOnlyList<Guid>> ClaimAsync(
         string lane,
         int limit,
@@ -27,15 +36,15 @@ public sealed class MessageStore(
                      FROM {table.QualifiedMessagesTable}
                      WHERE lane = @Lane
                        AND processed_on_utc IS NULL
-                       AND (next_retry_on_utc IS NULL OR next_retry_on_utc <= @NowUtc)
+                       AND available_on_utc <= @NowUtc
                        AND (claimed_until_utc IS NULL OR claimed_until_utc < @NowUtc)
-                     ORDER BY occurred_on_utc
+                     ORDER BY available_on_utc
                      LIMIT @Limit
                      FOR UPDATE SKIP LOCKED)
-                 RETURNING id, occurred_on_utc)
+                 RETURNING id, available_on_utc)
              SELECT id
              FROM claimed
-             ORDER BY occurred_on_utc
+             ORDER BY available_on_utc
              """;
 
         await using DbConnection connection = await dbConnectionFactory.OpenConnectionAsync();
@@ -73,10 +82,12 @@ public sealed class MessageStore(
 
     public async Task MarkProcessedAsync(
         Guid messageId,
-        DateTime processedOnUtc)
+        DateTime processedOnUtc,
+        string[] handledConsumers)
     {
         string sql =
             $"""
+             {SaveHandledConsumersSql}
              UPDATE {table.QualifiedMessagesTable}
              SET content = @ClearedContent::jsonb,
                  processed_on_utc = @ProcessedOnUtc,
@@ -94,7 +105,8 @@ public sealed class MessageStore(
             {
                 MessageId = messageId,
                 ClearedContent,
-                ProcessedOnUtc = processedOnUtc
+                ProcessedOnUtc = processedOnUtc,
+                HandledConsumers = handledConsumers
             });
     }
 
@@ -102,10 +114,12 @@ public sealed class MessageStore(
         Guid messageId,
         int retryCount,
         string error,
-        DateTime nextRetryOnUtc)
+        DateTime nextRetryOnUtc,
+        string[] handledConsumers)
     {
         string sql =
             $"""
+             {SaveHandledConsumersSql}
              UPDATE {table.QualifiedMessagesTable}
              SET retry_count = @RetryCount,
                  error = @Error,
@@ -123,7 +137,8 @@ public sealed class MessageStore(
                 MessageId = messageId,
                 RetryCount = retryCount,
                 Error = error,
-                NextRetryOnUtc = nextRetryOnUtc
+                NextRetryOnUtc = nextRetryOnUtc,
+                HandledConsumers = handledConsumers
             });
     }
 
@@ -131,11 +146,13 @@ public sealed class MessageStore(
         Guid messageId,
         int retryCount,
         string error,
-        DateTime deadLetteredOnUtc)
+        DateTime deadLetteredOnUtc,
+        string[] handledConsumers)
     {
         string sql =
             $"""
-             WITH dead_lettered AS (
+             {SaveHandledConsumersSql},
+             dead_lettered AS (
                  DELETE FROM {table.QualifiedMessagesTable}
                  WHERE id = @MessageId
                  RETURNING id, type, content, occurred_on_utc)
@@ -154,18 +171,26 @@ public sealed class MessageStore(
                 MessageId = messageId,
                 RetryCount = retryCount,
                 Error = error,
-                DeadLetteredOnUtc = deadLetteredOnUtc
+                DeadLetteredOnUtc = deadLetteredOnUtc,
+                HandledConsumers = handledConsumers
             });
     }
 
-    // A consumer record only guards against handling its message twice, so it goes when the message does.
-    public async Task<PurgedMessages> PurgeProcessedAsync(DateTime processedBeforeUtc)
+    // A consumer record only guards against handling its message twice, so it goes when the message does. A batch keeps
+    // each statement's locks and WAL small, even after a backlog of a few million rows.
+    public async Task<PurgedMessages> PurgeProcessedBatchAsync(
+        DateTime processedBeforeUtc,
+        int batchSize)
     {
         string sql =
             $"""
              WITH purged_messages AS (
                  DELETE FROM {table.QualifiedMessagesTable}
-                 WHERE processed_on_utc < @ProcessedBeforeUtc
+                 WHERE id IN (
+                     SELECT id
+                     FROM {table.QualifiedMessagesTable}
+                     WHERE processed_on_utc < @ProcessedBeforeUtc
+                     LIMIT @BatchSize)
                  RETURNING id),
              purged_consumers AS (
                  DELETE FROM {table.QualifiedConsumersTable}
@@ -180,6 +205,10 @@ public sealed class MessageStore(
 
         return await connection.QuerySingleAsync<PurgedMessages>(
             sql,
-            new { ProcessedBeforeUtc = processedBeforeUtc });
+            new
+            {
+                ProcessedBeforeUtc = processedBeforeUtc,
+                BatchSize = batchSize
+            });
     }
 }

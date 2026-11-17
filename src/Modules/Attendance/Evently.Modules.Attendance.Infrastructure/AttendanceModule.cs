@@ -28,7 +28,7 @@ namespace Evently.Modules.Attendance.Infrastructure;
 
 public static class AttendanceModule
 {
-    private const string ModuleName = "Attendance";
+    internal const string ModuleName = "Attendance";
 
     extension(IServiceCollection services)
     {

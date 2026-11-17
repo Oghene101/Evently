@@ -7,10 +7,12 @@ using Evently.Common.Infrastructure.Messaging;
 
 namespace Evently.Common.Infrastructure.Inbox;
 
+// The handled-record is saved by MessageProcessor together with the message's outcome, sparing a round trip per handler.
 public sealed class IdempotentIntegrationEventHandler<TIntegrationEvent>(
     IIntegrationEventHandler<TIntegrationEvent> decorated,
     IDbConnectionFactory dbConnectionFactory,
-    MessageTable inboxTable)
+    MessageTable inboxTable,
+    HandledMessageConsumers handledMessageConsumers)
     : IntegrationEventHandler<TIntegrationEvent>
     where TIntegrationEvent : IIntegrationEvent
 {
@@ -18,11 +20,9 @@ public sealed class IdempotentIntegrationEventHandler<TIntegrationEvent>(
         TIntegrationEvent integrationEvent,
         CancellationToken cancellationToken = default)
     {
-        await using DbConnection connection = await dbConnectionFactory.OpenConnectionAsync();
-
         var inboxMessageConsumer = new InboxMessageConsumer(integrationEvent.Id, decorated.GetType().Name);
 
-        bool alreadyHandled = await InboxConsumerExistsAsync(connection, inboxMessageConsumer);
+        bool alreadyHandled = await InboxConsumerExistsAsync(inboxMessageConsumer);
 
         if (alreadyHandled)
         {
@@ -36,14 +36,12 @@ public sealed class IdempotentIntegrationEventHandler<TIntegrationEvent>(
             return handled;
         }
 
-        await InsertInboxConsumerAsync(connection, inboxMessageConsumer);
+        handledMessageConsumers.Add(inboxMessageConsumer.Name);
 
         return handled;
     }
 
-    private async Task<bool> InboxConsumerExistsAsync(
-        DbConnection dbConnection,
-        InboxMessageConsumer inboxMessageConsumer)
+    private async Task<bool> InboxConsumerExistsAsync(InboxMessageConsumer inboxMessageConsumer)
     {
         string sql =
             $"""
@@ -55,19 +53,8 @@ public sealed class IdempotentIntegrationEventHandler<TIntegrationEvent>(
              )
              """;
 
-        return await dbConnection.ExecuteScalarAsync<bool>(sql, inboxMessageConsumer);
-    }
+        await using DbConnection connection = await dbConnectionFactory.OpenConnectionAsync();
 
-    private async Task InsertInboxConsumerAsync(
-        DbConnection dbConnection,
-        InboxMessageConsumer inboxMessageConsumer)
-    {
-        string sql =
-            $"""
-             INSERT INTO {inboxTable.QualifiedConsumersTable}(inbox_message_id, name)
-             VALUES (@InboxMessageId, @Name)
-             """;
-
-        await dbConnection.ExecuteAsync(sql, inboxMessageConsumer);
+        return await connection.ExecuteScalarAsync<bool>(sql, inboxMessageConsumer);
     }
 }

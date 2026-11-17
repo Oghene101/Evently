@@ -7,7 +7,8 @@ using Newtonsoft.Json;
 namespace Evently.Common.Infrastructure.Outbox;
 
 public sealed class InsertOutboxMessagesInterceptor(
-    Func<IDomainEvent, string> laneOf) : SaveChangesInterceptor
+    Func<IDomainEvent, string> laneOf,
+    OutboxWakeUps outboxWakeUps) : SaveChangesInterceptor
 {
     public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
@@ -20,6 +21,36 @@ public sealed class InsertOutboxMessagesInterceptor(
         }
 
         return await base.SavingChangesAsync(eventData, result, cancellationToken);
+    }
+
+    public override async ValueTask<int> SavedChangesAsync(
+        SaveChangesCompletedEventData eventData,
+        int result,
+        CancellationToken cancellationToken = default)
+    {
+        if (eventData.Context is not null)
+        {
+            WakeUpLanesOfSavedMessages(eventData.Context);
+        }
+
+        return await base.SavedChangesAsync(eventData, result, cancellationToken);
+    }
+
+    // Outbox messages are only ever added through this context; the processors update them with Dapper.
+    private void WakeUpLanesOfSavedMessages(DbContext context)
+    {
+        string[] lanesOfSavedMessages =
+        [
+            .. context.ChangeTracker
+                .Entries<OutboxMessage>()
+                .Select(entry => entry.Entity.Lane)
+                .Distinct()
+        ];
+
+        foreach (string lane in lanesOfSavedMessages)
+        {
+            outboxWakeUps.WakeUp(lane);
+        }
     }
 
     private void InsertOutboxMessages(DbContext context)
