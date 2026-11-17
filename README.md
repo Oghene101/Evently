@@ -83,7 +83,7 @@ Integration events between modules:
 | Messaging       | MassTransit on RabbitMQ, Quartz.NET for outbox and inbox purges   |
 | Identity        | Keycloak (JWT bearer), permission-based authorization             |
 | Gateway         | YARP reverse proxy                                                |
-| Observability   | Serilog and Seq for logs, OpenTelemetry and Jaeger for traces     |
+| Observability   | Serilog and Seq for logs, OpenTelemetry and Jaeger for traces; logs also go to the OTLP collector named by `OTEL_EXPORTER_OTLP_ENDPOINT` |
 | API docs        | OpenAPI with Scalar                                               |
 | Testing         | xUnit, FluentAssertions, NSubstitute, Bogus, NetArchTest, Testcontainers |
 | Code quality    | SonarAnalyzer, warnings as errors, central package management     |
