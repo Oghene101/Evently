@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Http;
 
 namespace Evently.Modules.Ticketing.Infrastructure.Authentication;
 
-internal sealed class CustomerContext(IHttpContextAccessor httpContextAccessor) : ICustomerContext
+internal sealed class CustomerContext(
+    IHttpContextAccessor httpContextAccessor) : ICustomerContext
 {
     public Guid CustomerId => httpContextAccessor.HttpContext?.User.GetUserId() ??
                               throw new EventlyException("User identifier is unavailable");

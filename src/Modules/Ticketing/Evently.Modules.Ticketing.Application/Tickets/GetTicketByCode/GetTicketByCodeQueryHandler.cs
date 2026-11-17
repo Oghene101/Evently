@@ -8,7 +8,8 @@ using Evently.Modules.Ticketing.Domain.Tickets;
 
 namespace Evently.Modules.Ticketing.Application.Tickets.GetTicketByCode;
 
-internal sealed class GetTicketByCodeQueryHandler(IDbConnectionFactory dbConnectionFactory)
+internal sealed class GetTicketByCodeQueryHandler(
+    IDbConnectionFactory dbConnectionFactory)
     : IQueryHandler<GetTicketByCodeQuery, TicketResponse>
 {
     public async Task<Result<TicketResponse>> Handle(GetTicketByCodeQuery request, CancellationToken cancellationToken)

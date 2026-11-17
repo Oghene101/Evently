@@ -2,7 +2,8 @@
 
 namespace Evently.Modules.Ticketing.Application.Carts;
 
-public sealed class CartService(ICacheService cacheService)
+public sealed class CartService(
+    ICacheService cacheService)
 {
     private static readonly TimeSpan DefaultExpiration = TimeSpan.FromMinutes(20);
 

@@ -7,7 +7,8 @@ using MediatR;
 
 namespace Evently.Modules.Attendance.Presentation.Tickets;
 
-public sealed class TicketIssuedIntegrationEventConsumer(ISender sender)
+public sealed class TicketIssuedIntegrationEventConsumer(
+    ISender sender)
     : IConsumer<TicketIssuedIntegrationEvent>
 {
     public async Task Consume(ConsumeContext<TicketIssuedIntegrationEvent> context)

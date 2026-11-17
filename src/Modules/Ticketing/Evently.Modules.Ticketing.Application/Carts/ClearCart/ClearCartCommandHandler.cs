@@ -4,7 +4,9 @@ using Evently.Modules.Ticketing.Domain.Customers;
 
 namespace Evently.Modules.Ticketing.Application.Carts.ClearCart;
 
-internal sealed class ClearCartCommandHandler(ICustomerRepository customerRepository, CartService cartService)
+internal sealed class ClearCartCommandHandler(
+    ICustomerRepository customerRepository,
+    CartService cartService)
     : ICommandHandler<ClearCartCommand>
 {
     public async Task<Result> Handle(ClearCartCommand request, CancellationToken cancellationToken)

@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Evently.Modules.Ticketing.Infrastructure.Customers;
 
-internal sealed class CustomerRepository(TicketingDbContext context) : ICustomerRepository
+internal sealed class CustomerRepository(
+    TicketingDbContext context) : ICustomerRepository
 {
     public async Task<Customer?> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {

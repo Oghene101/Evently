@@ -7,7 +7,8 @@ using Evently.Modules.Events.Domain.Categories;
 
 namespace Evently.Modules.Events.Application.Categories.GetCategory;
 
-internal sealed class GetCategoryQueryHandler(IDbConnectionFactory dbConnectionFactory)
+internal sealed class GetCategoryQueryHandler(
+    IDbConnectionFactory dbConnectionFactory)
     : IQueryHandler<GetCategoryQuery, CategoryResponse>
 {
     public async Task<Result<CategoryResponse>> Handle(GetCategoryQuery request, CancellationToken cancellationToken)

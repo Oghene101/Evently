@@ -2,7 +2,8 @@
 
 namespace Evently.Modules.Users.Infrastructure.Identity;
 
-internal sealed class KeyCloakClient(HttpClient httpClient)
+internal sealed class KeyCloakClient(
+    HttpClient httpClient)
 {
     internal async Task<string> RegisterUserAsync(UserRepresentation user,
         CancellationToken cancellationToken = default)

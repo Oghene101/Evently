@@ -20,7 +20,8 @@ public static class EndpointExtensions
             [
                 .. assemblies
                     .SelectMany(a => a.GetTypes())
-                    .Where(type => type is { IsAbstract: false, IsInterface: false } &&
+                    .Where(type => !type.IsAbstract &&
+                                   !type.IsInterface &&
                                    type.IsAssignableTo(typeof(IEndpoint)))
                     .Select(type => ServiceDescriptor.Transient(typeof(IEndpoint), type))
             ];

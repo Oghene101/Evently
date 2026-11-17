@@ -2,7 +2,9 @@
 
 namespace Evently.Modules.Attendance.Domain.Attendees;
 
-public sealed class AttendeeCheckedInDomainEvent(Guid attendeeId, Guid eventId) : DomainEvent
+public sealed class AttendeeCheckedInDomainEvent(
+    Guid attendeeId,
+    Guid eventId) : DomainEvent
 {
     public Guid AttendeeId { get; init; } = attendeeId;
 

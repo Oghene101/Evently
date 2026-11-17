@@ -7,7 +7,8 @@ using Evently.Modules.Ticketing.Domain.Customers;
 
 namespace Evently.Modules.Ticketing.Application.Customers.GetCustomer;
 
-internal sealed class GetCustomerByIdQueryHandler(IDbConnectionFactory dbConnectionFactory)
+internal sealed class GetCustomerByIdQueryHandler(
+    IDbConnectionFactory dbConnectionFactory)
     : IQueryHandler<GetCustomerQuery, CustomerResponse>
 {
     public async Task<Result<CustomerResponse>> Handle(GetCustomerQuery request, CancellationToken cancellationToken)

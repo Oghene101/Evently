@@ -3,7 +3,8 @@ using Serilog.Context;
 
 namespace Evently.Api.Middleware;
 
-internal sealed class LogContextTraceLoggingMiddleware(RequestDelegate next)
+internal sealed class LogContextTraceLoggingMiddleware(
+    RequestDelegate next)
 {
     public Task Invoke(HttpContext context)
     {

@@ -8,7 +8,8 @@ using Evently.Modules.Users.Domain.Users;
 
 namespace Evently.Modules.Users.Application.Users.GetUserPermissions;
 
-internal sealed class GetUserPermissionsQueryHandler(IDbConnectionFactory dbConnectionFactory)
+internal sealed class GetUserPermissionsQueryHandler(
+    IDbConnectionFactory dbConnectionFactory)
     : IQueryHandler<GetUserPermissionsQuery, PermissionsResponse>
 {
     public async Task<Result<PermissionsResponse>> Handle(

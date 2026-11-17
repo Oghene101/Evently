@@ -5,7 +5,9 @@ using Evently.Modules.Attendance.Domain.Attendees;
 
 namespace Evently.Modules.Attendance.Application.Attendees.UpdateAttendee;
 
-internal sealed class UpdateAttendeeCommandHandler(IAttendeeRepository attendeeRepository, IUnitOfWork unitOfWork)
+internal sealed class UpdateAttendeeCommandHandler(
+    IAttendeeRepository attendeeRepository,
+    IUnitOfWork unitOfWork)
     : ICommandHandler<UpdateAttendeeCommand>
 {
     public async Task<Result> Handle(UpdateAttendeeCommand request, CancellationToken cancellationToken)

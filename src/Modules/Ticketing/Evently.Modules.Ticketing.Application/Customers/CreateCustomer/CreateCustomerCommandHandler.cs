@@ -5,7 +5,9 @@ using Evently.Modules.Ticketing.Domain.Customers;
 
 namespace Evently.Modules.Ticketing.Application.Customers.CreateCustomer;
 
-internal sealed class CreateCustomerCommandHandler(ICustomerRepository customerRepository, IUnitOfWork unitOfWork)
+internal sealed class CreateCustomerCommandHandler(
+    ICustomerRepository customerRepository,
+    IUnitOfWork unitOfWork)
     : ICommandHandler<CreateCustomerCommand>
 {
     public async Task<Result> Handle(CreateCustomerCommand request, CancellationToken cancellationToken)

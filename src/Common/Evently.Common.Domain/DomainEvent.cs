@@ -1,6 +1,8 @@
 namespace Evently.Common.Domain;
 
-public abstract class DomainEvent(Guid id, DateTime occuredOnUtc) : IDomainEvent
+public abstract class DomainEvent(
+    Guid id,
+    DateTime occuredOnUtc) : IDomainEvent
 {
     protected DomainEvent() : this(Guid.CreateVersion7(), DateTime.UtcNow)
     {

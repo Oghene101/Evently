@@ -7,7 +7,8 @@ using MediatR;
 
 namespace Evently.Modules.Attendance.Presentation.Attendees;
 
-public sealed class UserProfileUpdatedIntegrationEventConsumer(ISender sender)
+public sealed class UserProfileUpdatedIntegrationEventConsumer(
+    ISender sender)
     : IConsumer<UserProfileUpdatedIntegrationEvent>
 {
     public async Task Consume(ConsumeContext<UserProfileUpdatedIntegrationEvent> context)

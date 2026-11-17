@@ -4,7 +4,8 @@ using Microsoft.Extensions.Options;
 
 namespace Evently.Common.Infrastructure.Authentication;
 
-internal sealed class JwtBearerConfigureOptions(IConfiguration configuration)
+internal sealed class JwtBearerConfigureOptions(
+    IConfiguration configuration)
     : IConfigureNamedOptions<JwtBearerOptions>
 {
     private const string ConfigurationSectionName = "Authentication";

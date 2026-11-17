@@ -7,7 +7,8 @@ using Evently.Modules.Events.Domain.TicketTypes;
 
 namespace Evently.Modules.Events.Application.TicketTypes.GetTicketType;
 
-internal sealed class GetTicketTypeQueryHandler(IDbConnectionFactory dbConnectionFactory)
+internal sealed class GetTicketTypeQueryHandler(
+    IDbConnectionFactory dbConnectionFactory)
     : IQueryHandler<GetTicketTypeQuery, TicketTypeResponse>
 {
     public async Task<Result<TicketTypeResponse>> Handle(

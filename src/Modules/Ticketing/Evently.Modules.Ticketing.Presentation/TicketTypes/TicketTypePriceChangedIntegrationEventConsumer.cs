@@ -7,7 +7,8 @@ using MediatR;
 
 namespace Evently.Modules.Ticketing.Presentation.TicketTypes;
 
-public sealed class TicketTypePriceChangedIntegrationEventConsumer(ISender sender)
+public sealed class TicketTypePriceChangedIntegrationEventConsumer(
+    ISender sender)
     : IConsumer<TicketTypePriceChangedIntegrationEvent>
 {
     public async Task Consume(ConsumeContext<TicketTypePriceChangedIntegrationEvent> context)

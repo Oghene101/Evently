@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Evently.Modules.Ticketing.Infrastructure.Tickets;
 
-internal sealed class TicketRepository(TicketingDbContext context) : ITicketRepository
+internal sealed class TicketRepository(
+    TicketingDbContext context) : ITicketRepository
 {
     public async Task<IEnumerable<Ticket>> GetForEventAsync(
         Event @event,

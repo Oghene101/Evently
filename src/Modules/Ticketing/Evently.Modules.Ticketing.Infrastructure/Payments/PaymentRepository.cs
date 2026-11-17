@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Evently.Modules.Ticketing.Infrastructure.Payments;
 
-internal sealed class PaymentRepository(TicketingDbContext context) : IPaymentRepository
+internal sealed class PaymentRepository(
+    TicketingDbContext context) : IPaymentRepository
 {
     public async Task<Payment?> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {

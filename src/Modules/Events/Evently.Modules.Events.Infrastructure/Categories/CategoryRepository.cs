@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Evently.Modules.Events.Infrastructure.Categories;
 
-internal sealed class CategoryRepository(EventsDbContext context) : ICategoryRepository
+internal sealed class CategoryRepository(
+    EventsDbContext context) : ICategoryRepository
 {
     public async Task<Category?> GetAsync(Guid id, CancellationToken cancellationToken = default)
     {

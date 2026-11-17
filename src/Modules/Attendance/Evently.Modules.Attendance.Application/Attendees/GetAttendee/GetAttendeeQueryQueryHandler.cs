@@ -7,7 +7,8 @@ using Evently.Modules.Attendance.Domain.Attendees;
 
 namespace Evently.Modules.Attendance.Application.Attendees.GetAttendee;
 
-internal sealed class GetAttendeeQueryQueryHandler(IDbConnectionFactory dbConnectionFactory)
+internal sealed class GetAttendeeQueryQueryHandler(
+    IDbConnectionFactory dbConnectionFactory)
     : IQueryHandler<GetAttendeeQuery, AttendeeResponse>
 {
     public async Task<Result<AttendeeResponse>> Handle(GetAttendeeQuery request, CancellationToken cancellationToken)
