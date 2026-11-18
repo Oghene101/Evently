@@ -1,0 +1,22 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <AspireUseCliBundle>true</AspireUseCliBundle>
+        <UserSecretsId>5caccad9-c88d-4db9-8c46-b8fd1c4bb05a</UserSecretsId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Aspire.Hosting.Keycloak"/>
+        <PackageReference Include="Aspire.Hosting.MongoDB"/>
+        <PackageReference Include="Aspire.Hosting.PostgreSQL"/>
+        <PackageReference Include="Aspire.Hosting.RabbitMQ"/>
+        <PackageReference Include="Aspire.Hosting.Redis"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\API\Evently.Api\Evently.Api.csproj"/>
+        <ProjectReference Include="..\..\src\API\Evently.Gateway\Evently.Gateway.csproj"/>
+    </ItemGroup>
+
+</Project>

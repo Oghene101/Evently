@@ -114,6 +114,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Evently.Gateway", "src\API\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Evently.Common.Infrastructure.UnitTests", "test\Evently.Common.Infrastructure.UnitTests\Evently.Common.Infrastructure.UnitTests.csproj", "{A277D1ED-2992-4ACB-96AE-90653C428CD4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Orchestration", "Orchestration", "{6769D8A8-7DDF-9F1A-6194-7060CBC2FEA6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Evently.AppHost", "Orchestration\Evently.AppHost\Evently.AppHost.csproj", "{C6CB8259-9819-4A37-AA18-9807DB673DE2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -280,6 +284,10 @@ Global
 		{A277D1ED-2992-4ACB-96AE-90653C428CD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A277D1ED-2992-4ACB-96AE-90653C428CD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A277D1ED-2992-4ACB-96AE-90653C428CD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6CB8259-9819-4A37-AA18-9807DB673DE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6CB8259-9819-4A37-AA18-9807DB673DE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6CB8259-9819-4A37-AA18-9807DB673DE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6CB8259-9819-4A37-AA18-9807DB673DE2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{BBD11FA5-1A9F-4C6A-822E-9E24F92682E7} = {FDB7483D-3719-4AE3-88B8-3D05810395CF}
@@ -333,5 +341,6 @@ Global
 		{12B962E2-000C-4D73-84B3-4BB0C1750D8C} = {A033DECD-D800-4150-AEA6-80CE4E78B4C8}
 		{426C0533-19A1-4AD6-9F2A-F049A2B06316} = {BBD11FA5-1A9F-4C6A-822E-9E24F92682E7}
 		{A277D1ED-2992-4ACB-96AE-90653C428CD4} = {D630CD3C-29DE-4AF1-995E-CED8E8B6C8E4}
+		{C6CB8259-9819-4A37-AA18-9807DB673DE2} = {6769D8A8-7DDF-9F1A-6194-7060CBC2FEA6}
 	EndGlobalSection
 EndGlobal

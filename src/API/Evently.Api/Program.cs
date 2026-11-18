@@ -55,6 +55,9 @@ builder.Services.AddInfrastructure(
 
 builder.Configuration.AddModuleConfiguration(["events", "users", "ticketing", "attendance"]);
 
+// Environment variables must still win over the module files added above.
+builder.Configuration.AddEnvironmentVariables();
+
 Uri keyCloakHealthUrl = builder.Configuration.GetKeyCloakHealthUrl();
 
 builder.Services.AddHealthChecks()
